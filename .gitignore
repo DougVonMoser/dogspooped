@@ -1,0 +1,26 @@
+.sonar
+.DS_Store
+.tmp
+.git
+node_modules
+.settings
+*.log
+dist
+.idea
+.vscode
+yarn-error.log
+config-json.json
+urls.txt
+reports/
+npm-debug.*
+cars-config.json
+coverage
+yarn.lock
+*.iml
+*.heapsnapshot
+windshield-cache
+
+# elm-package generated files
+elm-stuff/
+# elm-repl generated files
+repl-temp-*

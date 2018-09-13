@@ -7,6 +7,7 @@ import Html
 import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (css, href, src, class)
 import Html.Styled.Events exposing (onClick)
+import Json.Decode
 
 
 type MealStatus
@@ -48,12 +49,42 @@ initModel =
     ]
 
 
+init : Json.Decode.Value -> ( Model, Cmd msg )
+init flags =
+    ( initModel, Cmd.none )
+
+
 type Msg
-    = Msg
+    = JustPooped Dog
+    | JustPeed Dog
 
 
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    []
+    let
+        newModel =
+            case msg of
+                JustPeed dog ->
+                    List.map
+                        (\x ->
+                            if x == dog then
+                                { x | pees = (Time.millisToPosix 1536847616243 :: x.pees) }
+                            else
+                                x
+                        )
+                        model
+
+                JustPooped dog ->
+                    List.map
+                        (\x ->
+                            if x == dog then
+                                { x | poops = (Time.millisToPosix 1536847616243 :: x.poops) }
+                            else
+                                x
+                        )
+                        model
+    in
+        ( newModel, Cmd.none )
 
 
 viewHour : Posix -> String
@@ -62,10 +93,11 @@ viewHour posix =
         |> String.fromInt
 
 
-viewWaste : String -> List Posix -> Html Msg
-viewWaste wasteAction wastes =
+viewWaste : Msg -> String -> List Posix -> Html Msg
+viewWaste msg wasteAction wastes =
     div [ class wasteAction, css [ paddingLeft (px 16) ] ]
-        [ span [] [ text wasteAction ]
+        [ button [ onClick msg ] []
+        , span [] [ text wasteAction ]
         , span [] (List.map (viewHour >> text) wastes)
         ]
 
@@ -74,8 +106,8 @@ dogView : Dog -> Html Msg
 dogView dog =
     div [ css [ border3 (px 1) dashed (rgb 12 12 12), margin (px 16) ] ]
         [ text dog.name
-        , viewWaste "poops" dog.poops
-        , viewWaste "pees" dog.pees
+        , viewWaste (JustPooped dog) "poops" dog.poops
+        , viewWaste (JustPeed dog) "pees" dog.pees
         ]
 
 
@@ -86,8 +118,9 @@ view model =
 
 
 main =
-    Browser.sandbox
-        { init = initModel
+    Browser.element
+        { init = init
+        , subscriptions = (\x -> Sub.none)
         , view = view >> toUnstyled
         , update = update
         }

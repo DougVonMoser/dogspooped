@@ -8,6 +8,7 @@ import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (css, href, src, class)
 import Html.Styled.Events exposing (onClick)
 import Json.Decode
+import Task
 
 
 type MealStatus
@@ -57,40 +58,60 @@ init flags =
 type Msg
     = JustPooped Dog
     | JustPeed Dog
+    | PeeTime Dog Posix
+    | PoopTime Dog Posix
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    let
-        newModel =
-            case msg of
-                JustPeed dog ->
+    case msg of
+        PeeTime dog posix ->
+            let
+                newMods =
                     List.map
                         (\x ->
                             if x == dog then
-                                { x | pees = (Time.millisToPosix 1536847616243 :: x.pees) }
+                                { x | pees = (posix :: x.pees) }
                             else
                                 x
                         )
                         model
+            in
+                ( newMods, Cmd.none )
 
-                JustPooped dog ->
+        PoopTime dog posix ->
+            let
+                newMods =
                     List.map
                         (\x ->
                             if x == dog then
-                                { x | poops = (Time.millisToPosix 1536847616243 :: x.poops) }
+                                { x | poops = (posix :: x.poops) }
                             else
                                 x
                         )
                         model
-    in
-        ( newModel, Cmd.none )
+            in
+                ( newMods, Cmd.none )
+
+        JustPeed dog ->
+            ( model, Task.perform (PeeTime dog) Time.now )
+
+        JustPooped dog ->
+            ( model, Task.perform (PoopTime dog) Time.now )
 
 
 viewHour : Posix -> String
 viewHour posix =
-    Time.toHour Time.utc posix
-        |> String.fromInt
+    let
+        hours =
+            Time.toHour Time.utc posix
+                |> String.fromInt
+
+        minutes =
+            Time.toMinute Time.utc posix
+                |> String.fromInt
+    in
+        " " ++ hours ++ ":" ++ minutes ++ " "
 
 
 viewWaste : Msg -> String -> List Posix -> Html Msg

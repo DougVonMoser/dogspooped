@@ -9,6 +9,7 @@ import Html.Styled.Attributes exposing (css, href, src, class)
 import Html.Styled.Events exposing (onClick)
 import Json.Decode
 import Task
+import DateFormat
 
 
 type MealStatus
@@ -27,13 +28,19 @@ type alias Dog =
     }
 
 
-type alias Model =
-    List Dog
+type alias MiniModel =
+    { dogs : List Dog
+    , zone : Time.Zone
+    }
 
 
-initModel : Model
-initModel =
-    [ { poops = [ Time.millisToPosix 1536847616243 ]
+type Model
+    = GettingTimeZone
+    | TimeZoneLoaded MiniModel
+
+
+initModelish =
+    [ { poops = []
       , pees = []
       , allergied = False
       , breakfast = HaveNot
@@ -50,9 +57,9 @@ initModel =
     ]
 
 
-init : Json.Decode.Value -> ( Model, Cmd msg )
+init : Json.Decode.Value -> ( Model, Cmd Msg )
 init flags =
-    ( initModel, Cmd.none )
+    ( GettingTimeZone, Task.perform GotTimeZone Time.here )
 
 
 type Msg
@@ -60,82 +67,99 @@ type Msg
     | JustPeed Dog
     | PeeTime Dog Posix
     | PoopTime Dog Posix
+    | GotTimeZone Time.Zone
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        PeeTime dog posix ->
-            let
-                newMods =
-                    List.map
-                        (\x ->
-                            if x == dog then
-                                { x | pees = (posix :: x.pees) }
-                            else
-                                x
-                        )
-                        model
-            in
-                ( newMods, Cmd.none )
+update msg bigmodel =
+    case bigmodel of
+        GettingTimeZone ->
+            case msg of
+                GotTimeZone zone ->
+                    ( TimeZoneLoaded { zone = zone, dogs = initModelish }, Cmd.none )
 
-        PoopTime dog posix ->
-            let
-                newMods =
-                    List.map
-                        (\x ->
-                            if x == dog then
-                                { x | poops = (posix :: x.poops) }
-                            else
-                                x
-                        )
-                        model
-            in
-                ( newMods, Cmd.none )
+                _ ->
+                    ( bigmodel, Cmd.none )
 
-        JustPeed dog ->
-            ( model, Task.perform (PeeTime dog) Time.now )
+        TimeZoneLoaded model ->
+            case msg of
+                PeeTime dog posix ->
+                    let
+                        newMods =
+                            List.map
+                                (\x ->
+                                    if x == dog then
+                                        { x | pees = (posix :: x.pees) }
+                                    else
+                                        x
+                                )
+                                model.dogs
+                    in
+                        ( TimeZoneLoaded { model | dogs = newMods }, Cmd.none )
 
-        JustPooped dog ->
-            ( model, Task.perform (PoopTime dog) Time.now )
+                PoopTime dog posix ->
+                    let
+                        newMods =
+                            List.map
+                                (\x ->
+                                    if x == dog then
+                                        { x | poops = (posix :: x.poops) }
+                                    else
+                                        x
+                                )
+                                model.dogs
+                    in
+                        ( TimeZoneLoaded { model | dogs = newMods }, Cmd.none )
+
+                JustPeed dog ->
+                    ( bigmodel, Task.perform (PeeTime dog) Time.now )
+
+                JustPooped dog ->
+                    ( bigmodel, Task.perform (PoopTime dog) Time.now )
+
+                GotTimeZone zone ->
+                    ( bigmodel, Cmd.none )
 
 
-viewHour : Posix -> String
-viewHour posix =
-    let
-        hours =
-            Time.toHour Time.utc posix
-                |> String.fromInt
-
-        minutes =
-            Time.toMinute Time.utc posix
-                |> String.fromInt
-    in
-        " " ++ hours ++ ":" ++ minutes ++ " "
-
-
-viewWaste : Msg -> String -> List Posix -> Html Msg
-viewWaste msg wasteAction wastes =
-    div [ class wasteAction, css [ paddingLeft (px 16) ] ]
-        [ button [ onClick msg ] []
-        , span [] [ text wasteAction ]
-        , span [] (List.map (viewHour >> text) wastes)
+viewHour : Time.Zone -> Posix -> String
+viewHour =
+    DateFormat.format
+        [ DateFormat.text " "
+        , DateFormat.hourNumber
+        , DateFormat.text ":"
+        , DateFormat.minuteFixed
+        , DateFormat.text " "
+        , DateFormat.amPmLowercase
         ]
 
 
-dogView : Dog -> Html Msg
-dogView dog =
+viewWaste : Time.Zone -> Msg -> String -> List Posix -> Html Msg
+viewWaste zone msg wasteAction wastes =
+    div [ class wasteAction, css [ paddingLeft (px 16) ] ]
+        [ button [ onClick msg, css [ marginRight (px 16) ] ] [ " " ++ wasteAction ++ " " |> text ]
+        , span [] [ text wasteAction ]
+        , span [] (List.map ((viewHour zone) >> text) wastes)
+        ]
+
+
+dogView : Time.Zone -> Dog -> Html Msg
+dogView zone dog =
     div [ css [ border3 (px 1) dashed (rgb 12 12 12), margin (px 16) ] ]
         [ text dog.name
-        , viewWaste (JustPooped dog) "poops" dog.poops
-        , viewWaste (JustPeed dog) "pees" dog.pees
+        , (viewWaste zone) (JustPooped dog) "💩" dog.poops
+        , (viewWaste zone) (JustPeed dog) "🍋" dog.pees
         ]
 
 
 view : Model -> Html Msg
 view model =
-    List.map dogView model
-        |> div []
+    case model of
+        GettingTimeZone ->
+            text ""
+
+        TimeZoneLoaded minimodel ->
+            List.map (dogView minimodel.zone) minimodel.dogs
+                |> div []
 
 
 main =

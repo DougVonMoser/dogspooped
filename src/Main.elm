@@ -121,31 +121,49 @@ update msg bigmodel =
                     ( bigmodel, Cmd.none )
 
 
+
+-- VIEW
+
+
+largeFont =
+    fontSize (px 40)
+
+
 viewHour : Time.Zone -> Posix -> String
 viewHour =
     DateFormat.format
-        [ DateFormat.text " "
-        , DateFormat.hourNumber
+        [ DateFormat.hourNumber
         , DateFormat.text ":"
         , DateFormat.minuteFixed
         , DateFormat.text " "
         , DateFormat.amPmLowercase
+        , DateFormat.text " "
         ]
+
+
+viewTimeStamps zone wasteAction wastes =
+    let
+        spanner stringy =
+            span [ css [ margin (px 8) ] ] [ text stringy ]
+
+        mapper =
+            ((viewHour zone) >> (++) wasteAction >> spanner)
+    in
+        List.map mapper wastes
 
 
 viewWaste : Time.Zone -> Msg -> String -> List Posix -> Html Msg
 viewWaste zone msg wasteAction wastes =
-    div [ class wasteAction, css [ paddingLeft (px 16) ] ]
-        [ button [ onClick msg, css [ marginRight (px 16) ] ] [ " " ++ wasteAction ++ " " |> text ]
-        , span [] [ text wasteAction ]
-        , span [] (List.map ((viewHour zone) >> text) wastes)
+    div [ class wasteAction, css [ largeFont, paddingLeft (px 16) ] ]
+        [ button [ onClick msg, css [ largeFont, marginRight (px 16) ] ] [ " " ++ wasteAction ++ " " |> text ]
+        , span [] (viewTimeStamps zone wasteAction wastes)
         ]
 
 
 dogView : Time.Zone -> Dog -> Html Msg
 dogView zone dog =
-    div [ css [ border3 (px 1) dashed (rgb 12 12 12), margin (px 16) ] ]
-        [ text dog.name
+    div [ css [ margin (px 16), padding4 zero zero (px 16) (px 16) ] ]
+        [ h1 [] [ text dog.name ]
         , (viewWaste zone) (JustPooped dog) "💩" dog.poops
         , (viewWaste zone) (JustPeed dog) "🍋" dog.pees
         ]

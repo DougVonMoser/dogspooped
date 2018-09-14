@@ -65,9 +65,11 @@ init flags =
 type Msg
     = JustPooped Dog
     | JustPeed Dog
+    | JustAllergied Dog
     | PeeTime Dog Posix
     | PoopTime Dog Posix
     | GotTimeZone Time.Zone
+    | Noop
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -117,7 +119,24 @@ update msg bigmodel =
                 JustPooped dog ->
                     ( bigmodel, Task.perform (PoopTime dog) Time.now )
 
+                JustAllergied dog ->
+                    let
+                        newMods =
+                            List.map
+                                (\x ->
+                                    if x == dog then
+                                        { x | allergied = True }
+                                    else
+                                        x
+                                )
+                                model.dogs
+                    in
+                        ( TimeZoneLoaded { model | dogs = newMods }, Cmd.none )
+
                 GotTimeZone zone ->
+                    ( bigmodel, Cmd.none )
+
+                _ ->
                     ( bigmodel, Cmd.none )
 
 
@@ -155,9 +174,23 @@ viewTimeStamps zone wasteAction wastes =
 viewWaste : Time.Zone -> Msg -> String -> List Posix -> Html Msg
 viewWaste zone msg wasteAction wastes =
     div [ class wasteAction, css [ largeFont, paddingLeft (px 16) ] ]
-        [ button [ onClick msg, css [ largeFont, marginRight (px 16) ] ] [ " " ++ wasteAction ++ " " |> text ]
+        [ wasteButton msg wasteAction
         , span [] (viewTimeStamps zone wasteAction wastes)
         ]
+
+
+wasteButton msg wasteAction =
+    button [ onClick msg, css [ largeFont, marginRight (px 16) ] ] [ " " ++ wasteAction ++ " " |> text ]
+
+
+viewAllergy dog =
+    if dog.allergied then
+        div []
+            [ wasteButton Noop "💊"
+            , text "allergied"
+            ]
+    else
+        wasteButton (JustAllergied dog) "💊"
 
 
 dogView : Time.Zone -> Dog -> Html Msg
@@ -166,6 +199,7 @@ dogView zone dog =
         [ h1 [] [ text dog.name ]
         , (viewWaste zone) (JustPooped dog) "💩" dog.poops
         , (viewWaste zone) (JustPeed dog) "🍋" dog.pees
+        , viewAllergy dog
         ]
 
 
@@ -187,3 +221,21 @@ main =
         , view = view >> toUnstyled
         , update = update
         }
+
+
+
+-- Beckfast 🍳
+-- Dinner 🍔
+-- viewMeal : MealStatus -> String -> Html Msg
+-- viewMeal mealStatus icon =
+--     let
+--         statusHtml =
+--             case mealStatus of
+--                 HaveNot ->
+--                     text "have not eaten"
+--                 Half ->
+--                     text "half"
+--                 Eated ->
+--                     text "all eated"
+--     in
+--         div [] [ wasteButton Noop icon, statusHtml ]

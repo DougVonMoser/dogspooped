@@ -10,6 +10,7 @@ import Html.Styled.Events exposing (onClick)
 import Json.Decode
 import Task
 import DateFormat
+import TimePicker exposing (TimeEvent(..), TimePicker)
 
 
 type MealStatus
@@ -18,9 +19,15 @@ type MealStatus
     | Eated
 
 
+type alias Occurence =
+    { posix : Posix
+    , timePicker : TimePicker
+    }
+
+
 type alias Dog =
-    { poops : List Posix
-    , pees : List Posix
+    { poops : List Occurence
+    , pees : List Occurence
     , name : String
     }
 
@@ -42,18 +49,10 @@ type Model
 initDogs =
     [ { poops = []
       , pees = []
-
-      --   , allergied = False
-      --   , breakfast = HaveNot
-      --   , dinner = HaveNot
       , name = "Oakley"
       }
     , { poops = []
       , pees = []
-
-      --   , allergied = False
-      --   , breakfast = HaveNot
-      --   , dinner = HaveNot
       , name = "Easton"
       }
     ]
@@ -73,6 +72,7 @@ type Msg
     | GotTimeZone Time.Zone
     | JustBreakfasted
     | JustDinnered
+    | GotTimeMsg TimePicker.Msg
     | Noop
 
 
@@ -103,7 +103,13 @@ update msg bigmodel =
                             List.map
                                 (\x ->
                                     if x == dog then
-                                        { x | pees = (posix :: x.pees) }
+                                        let
+                                            newOccurennce =
+                                                { posix = posix
+                                                , timePicker = TimePicker.init Nothing
+                                                }
+                                        in
+                                            { x | pees = (newOccurennce :: x.pees) }
                                     else
                                         x
                                 )
@@ -117,7 +123,13 @@ update msg bigmodel =
                             List.map
                                 (\x ->
                                     if x == dog then
-                                        { x | poops = (posix :: x.poops) }
+                                        let
+                                            newOccurennce =
+                                                { posix = posix
+                                                , timePicker = TimePicker.init Nothing
+                                                }
+                                        in
+                                            { x | poops = (newOccurennce :: x.poops) }
                                     else
                                         x
                                 )
@@ -191,18 +203,19 @@ viewHour =
         ]
 
 
+viewTimeStamps : Time.Zone -> String -> List Occurence -> List (Html Msg)
 viewTimeStamps zone wasteAction wastes =
     let
         spanner stringy =
             span [ css [ margin (px 8) ] ] [ text stringy ]
 
         mapper =
-            ((viewHour zone) >> (++) wasteAction >> spanner)
+            .posix >> (viewHour zone) >> (++) wasteAction >> spanner
     in
         List.map mapper wastes
 
 
-viewWaste : Time.Zone -> Msg -> String -> List Posix -> Html Msg
+viewWaste : Time.Zone -> Msg -> String -> List Occurence -> Html Msg
 viewWaste zone msg wasteAction wastes =
     div [ class wasteAction, css [ largeFont, paddingLeft (px 16) ] ]
         [ wasteButton msg wasteAction
@@ -242,10 +255,7 @@ view model =
         TimeZoneLoaded minimodel ->
             div []
                 [ div []
-                    [ h1 []
-                        [ text "Needs"
-                        ]
-                    , viewAllergy minimodel
+                    [ viewAllergy minimodel
                     , viewMeal JustBreakfasted minimodel.breakfast "🍳"
                     , viewMeal JustDinnered minimodel.dinner "🍔"
                     ]

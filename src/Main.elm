@@ -21,7 +21,7 @@ type MealStatus
 
 type alias Occurence =
     { posix : Posix
-    , timePicker : TimePicker
+    , pickerOpenForMe : Bool
     }
 
 
@@ -38,6 +38,7 @@ type alias MiniModel =
     , allergied : Bool
     , breakfast : MealStatus
     , dinner : MealStatus
+    , timePicker : TimePicker
     }
 
 
@@ -72,7 +73,8 @@ type Msg
     | GotTimeZone Time.Zone
     | JustBreakfasted
     | JustDinnered
-    | GotTimeMsg TimePicker.Msg
+    | GotTimePickerMsg TimePicker.Msg
+    | ShowATimePicker Occurence
     | Noop
 
 
@@ -88,6 +90,7 @@ update msg bigmodel =
                         , allergied = False
                         , breakfast = HaveNot
                         , dinner = HaveNot
+                        , timePicker = TimePicker.init Nothing
                         }
                     , Cmd.none
                     )
@@ -106,7 +109,7 @@ update msg bigmodel =
                                         let
                                             newOccurennce =
                                                 { posix = posix
-                                                , timePicker = TimePicker.init Nothing
+                                                , pickerOpenForMe = False
                                                 }
                                         in
                                             { x | pees = (newOccurennce :: x.pees) }
@@ -126,7 +129,7 @@ update msg bigmodel =
                                         let
                                             newOccurennce =
                                                 { posix = posix
-                                                , timePicker = TimePicker.init Nothing
+                                                , pickerOpenForMe = False
                                                 }
                                         in
                                             { x | poops = (newOccurennce :: x.poops) }
@@ -176,9 +179,17 @@ update msg bigmodel =
                     in
                         ( TimeZoneLoaded { model | dinner = newStatus }, Cmd.none )
 
-                GotTimeZone zone ->
+                ShowATimePicker occurence ->
                     ( bigmodel, Cmd.none )
 
+                GotTimePickerMsg m ->
+                    let
+                        ( updatedPicker, timeEvent ) =
+                            TimePicker.update TimePicker.defaultSettings m model.timePicker
+                    in
+                        ( TimeZoneLoaded { model | timePicker = updatedPicker }, Cmd.none )
+
+                -- ( bigmodel, Cmd.none )
                 _ ->
                     ( bigmodel, Cmd.none )
 
@@ -206,13 +217,18 @@ viewHour =
 viewTimeStamps : Time.Zone -> String -> List Occurence -> List (Html Msg)
 viewTimeStamps zone wasteAction wastes =
     let
-        spanner stringy =
-            span [ css [ margin (px 8) ] ] [ text stringy ]
+        spanner waste stringy =
+            span [ css [ margin (px 8) ], onClick (ShowATimePicker waste) ]
+                [ text stringy ]
 
-        mapper =
-            .posix >> (viewHour zone) >> (++) wasteAction >> spanner
+        occurrenceToTimeStamp waste =
+            let
+                spannylol =
+                    (.posix >> (viewHour zone) >> (++) wasteAction >> (spanner waste)) waste
+            in
+                spannylol
     in
-        List.map mapper wastes
+        List.map occurrenceToTimeStamp wastes
 
 
 viewWaste : Time.Zone -> Msg -> String -> List Occurence -> Html Msg
@@ -260,6 +276,11 @@ view model =
                     , viewMeal JustDinnered minimodel.dinner "🍔"
                     ]
                 , div [] (List.map (dogView minimodel.zone) minimodel.dogs)
+                , div [ class "default-time-picker" ]
+                    [ TimePicker.view TimePicker.defaultSettings minimodel.timePicker
+                        |> Html.map GotTimePickerMsg
+                        |> Html.Styled.fromUnstyled
+                    ]
                 ]
 
 

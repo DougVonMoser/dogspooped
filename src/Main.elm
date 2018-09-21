@@ -189,7 +189,6 @@ update msg bigmodel =
                     in
                         ( TimeZoneLoaded { model | timePicker = updatedPicker }, Cmd.none )
 
-                -- ( bigmodel, Cmd.none )
                 _ ->
                     ( bigmodel, Cmd.none )
 

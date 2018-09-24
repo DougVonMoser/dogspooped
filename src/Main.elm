@@ -10,7 +10,7 @@ import Html.Styled.Events exposing (onClick)
 import Json.Decode
 import Task
 import DateFormat
-import TimePicker exposing (TimeEvent(..), TimePicker)
+import TimePicker exposing (TimeEvent(..), TimePicker, Msg(..))
 
 
 type MealStatus
@@ -38,7 +38,7 @@ type alias MiniModel =
     , allergied : Bool
     , breakfast : MealStatus
     , dinner : MealStatus
-    , timePicker : TimePicker
+    , timePicker : Maybe TimePicker
     }
 
 
@@ -75,6 +75,7 @@ type Msg
     | JustDinnered
     | GotTimePickerMsg TimePicker.Msg
     | ShowATimePicker Occurence
+    | CloseAndUpdateTime
     | Noop
 
 
@@ -90,7 +91,7 @@ update msg bigmodel =
                         , allergied = False
                         , breakfast = HaveNot
                         , dinner = HaveNot
-                        , timePicker = TimePicker.init Nothing
+                        , timePicker = Nothing -- TimePicker.init Nothing
                         }
                     , Cmd.none
                     )
@@ -180,14 +181,40 @@ update msg bigmodel =
                         ( TimeZoneLoaded { model | dinner = newStatus }, Cmd.none )
 
                 ShowATimePicker occurence ->
-                    ( bigmodel, Cmd.none )
+                    -- let
+                    --     timePickerSettings =
+                    --         let
+                    --             default =
+                    --                 TimePicker.defaultSettings
+                    --         in
+                    --             { default
+                    --                 | showSeconds = False
+                    --                 , minuteStep = 15
+                    --             }
+                    -- in
+                    let
+                        tp =
+                            TimePicker.init Nothing
+
+                        ( updatedTp, timeEvent ) =
+                            TimePicker.update TimePicker.defaultSettings TimePicker.NoOp tp
+                    in
+                        ( TimeZoneLoaded { model | timePicker = Just updatedTp }, Cmd.none )
+
+                CloseAndUpdateTime ->
+                    ( TimeZoneLoaded { model | timePicker = Nothing }, Cmd.none )
 
                 GotTimePickerMsg m ->
-                    let
-                        ( updatedPicker, timeEvent ) =
-                            TimePicker.update TimePicker.defaultSettings m model.timePicker
-                    in
-                        ( TimeZoneLoaded { model | timePicker = updatedPicker }, Cmd.none )
+                    case model.timePicker of
+                        Just tp ->
+                            let
+                                ( updatedPicker, timeEvent ) =
+                                    TimePicker.update TimePicker.defaultSettings m tp
+                            in
+                                ( TimeZoneLoaded { model | timePicker = Just updatedPicker }, Cmd.none )
+
+                        Nothing ->
+                            ( bigmodel, Cmd.none )
 
                 _ ->
                     ( bigmodel, Cmd.none )
@@ -268,19 +295,24 @@ view model =
             text ""
 
         TimeZoneLoaded minimodel ->
-            div []
-                [ div []
-                    [ viewAllergy minimodel
-                    , viewMeal JustBreakfasted minimodel.breakfast "🍳"
-                    , viewMeal JustDinnered minimodel.dinner "🍔"
-                    ]
-                , div [] (List.map (dogView minimodel.zone) minimodel.dogs)
-                , div [ class "default-time-picker" ]
-                    [ TimePicker.view TimePicker.defaultSettings minimodel.timePicker
-                        |> Html.map GotTimePickerMsg
-                        |> Html.Styled.fromUnstyled
-                    ]
-                ]
+            case minimodel.timePicker of
+                Just tp ->
+                    div []
+                        [ input [ Html.Styled.Attributes.value "9:58AM" ] []
+                        , button [ onClick CloseAndUpdateTime ] [ text "X" ]
+                        ]
+
+                Nothing ->
+                    div []
+                        [ div []
+                            [ viewAllergy minimodel
+                            , viewMeal JustBreakfasted minimodel.breakfast "🍳"
+                            , viewMeal JustDinnered minimodel.dinner "🍔"
+                            ]
+                        , div [] (List.map (dogView minimodel.zone) minimodel.dogs)
+                        , div [ class "default-time-picker" ]
+                            []
+                        ]
 
 
 main =

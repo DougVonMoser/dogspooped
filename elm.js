@@ -5658,18 +5658,12 @@ var author$project$Main$initDogs = _List_fromArray(
 		{name: 'Oakley', pees: _List_Nil, poops: _List_Nil},
 		{name: 'Easton', pees: _List_Nil, poops: _List_Nil}
 	]);
-var elm$core$Platform$Cmd$batch = _Platform_batch;
-var elm$core$Platform$Cmd$none = elm$core$Platform$Cmd$batch(_List_Nil);
-var elm$time$Time$Posix = function (a) {
-	return {$: 'Posix', a: a};
-};
-var elm$time$Time$millisToPosix = elm$time$Time$Posix;
-var elm$time$Time$now = _Time_now(elm$time$Time$millisToPosix);
+var author$project$TimePicker$NoOp = {$: 'NoOp'};
 var elm$core$Basics$always = F2(
 	function (a, _n0) {
 		return a;
 	});
-var stephenreddek$elm_time_picker$TimePicker$defaultSettings = {
+var author$project$TimePicker$defaultSettings = {
 	disabled: false,
 	hideDisabledOptions: false,
 	hourStep: 1,
@@ -5685,18 +5679,79 @@ var stephenreddek$elm_time_picker$TimePicker$defaultSettings = {
 	showSeconds: true,
 	use24Hours: false
 };
-var stephenreddek$elm_time_picker$TimePicker$TimePicker = function (a) {
+var author$project$TimePicker$TimePicker = function (a) {
 	return {$: 'TimePicker', a: a};
 };
-var stephenreddek$elm_time_picker$TimePicker$init = function (initialValue) {
-	return stephenreddek$elm_time_picker$TimePicker$TimePicker(
-		{inputText: elm$core$Maybe$Nothing, open: false, value: initialValue});
+var author$project$TimePicker$init = function (initialValue) {
+	return author$project$TimePicker$TimePicker(
+		{inputText: elm$core$Maybe$Nothing, open: true, value: initialValue});
 };
-var elm$core$Basics$composeR = F3(
-	function (f, g, x) {
-		return g(
-			f(x));
+var author$project$TimePicker$Changed = function (a) {
+	return {$: 'Changed', a: a};
+};
+var author$project$TimePicker$NoChange = {$: 'NoChange'};
+var elm$core$Basics$ge = _Utils_ge;
+var author$project$TimePicker$defaultPeriodIn12HourFormatForSelection = F2(
+	function (settings, time) {
+		return settings.use24Hours ? time : (((time.hours >= 0) && (time.hours <= 6)) ? _Utils_update(
+			time,
+			{hours: time.hours + 12}) : time);
 	});
+var author$project$TimePicker$defaultTime = {hours: 0, minutes: 0, seconds: 0};
+var author$project$TimePicker$AM = {$: 'AM'};
+var author$project$TimePicker$PM = {$: 'PM'};
+var author$project$TimePicker$periodFromTime = function (time) {
+	return (time.hours >= 12) ? author$project$TimePicker$PM : author$project$TimePicker$AM;
+};
+var elm$core$Basics$not = _Basics_not;
+var author$project$TimePicker$isValidTime = F2(
+	function (settings, time) {
+		var isValidSecond = (!settings.isSecondDisabled(time.seconds)) && ((time.seconds >= 0) && (time.seconds <= 59));
+		var isValidPeriod = settings.use24Hours || (!settings.isPeriodDisabled(
+			author$project$TimePicker$periodFromTime(time)));
+		var isValidMinute = (!settings.isMinuteDisabled(time.minutes)) && ((time.minutes >= 0) && (time.minutes <= 59));
+		var isValidHour = (!settings.isHourDisabled(time.hours)) && ((time.hours >= 0) && (time.hours <= 23));
+		return isValidHour && (isValidMinute && (isValidSecond && isValidPeriod));
+	});
+var elm$core$String$toLower = _String_toLower;
+var author$project$TimePicker$parsePeriod = function (text) {
+	var _n0 = elm$core$String$toLower(text);
+	switch (_n0) {
+		case 'am':
+			return elm$core$Result$Ok(
+				elm$core$Maybe$Just(author$project$TimePicker$AM));
+		case 'pm':
+			return elm$core$Result$Ok(
+				elm$core$Maybe$Just(author$project$TimePicker$PM));
+		default:
+			return elm$core$Result$Err(_Utils_Tuple0);
+	}
+};
+var author$project$TimePicker$defaultPeriodIn12HourFormatForInput = F2(
+	function (settings, time) {
+		return settings.use24Hours ? time : (((time.hours > 0) && (time.hours <= 6)) ? _Utils_update(
+			time,
+			{hours: time.hours + 12}) : time);
+	});
+var author$project$TimePicker$setTimeWithPeriod = F2(
+	function (period, time) {
+		if (period.$ === 'AM') {
+			return (time.hours >= 12) ? _Utils_update(
+				time,
+				{hours: time.hours - 12}) : time;
+		} else {
+			return (time.hours >= 12) ? time : _Utils_update(
+				time,
+				{hours: time.hours + 12});
+		}
+	});
+var elm$core$List$isEmpty = function (xs) {
+	if (!xs.b) {
+		return true;
+	} else {
+		return false;
+	}
+};
 var elm$core$Maybe$map = F2(
 	function (f, maybe) {
 		if (maybe.$ === 'Just') {
@@ -5716,135 +5771,17 @@ var elm$core$Maybe$withDefault = F2(
 			return _default;
 		}
 	});
-var elm$core$Result$map = F2(
-	function (func, ra) {
-		if (ra.$ === 'Ok') {
-			var a = ra.a;
-			return elm$core$Result$Ok(
-				func(a));
-		} else {
-			var e = ra.a;
-			return elm$core$Result$Err(e);
-		}
-	});
-var elm$core$Result$withDefault = F2(
-	function (def, result) {
-		if (result.$ === 'Ok') {
-			var a = result.a;
-			return a;
-		} else {
-			return def;
-		}
-	});
-var stephenreddek$elm_time_picker$TimePicker$Changed = function (a) {
-	return {$: 'Changed', a: a};
-};
-var stephenreddek$elm_time_picker$TimePicker$NoChange = {$: 'NoChange'};
-var elm$core$Basics$ge = _Utils_ge;
-var stephenreddek$elm_time_picker$TimePicker$defaultPeriodIn12HourFormatForSelection = F2(
-	function (settings, time) {
-		return settings.use24Hours ? time : (((time.hours >= 0) && (time.hours <= 6)) ? _Utils_update(
-			time,
-			{hours: time.hours + 12}) : time);
-	});
-var stephenreddek$elm_time_picker$TimePicker$defaultTime = {hours: 0, minutes: 0, seconds: 0};
-var elm$core$Basics$not = _Basics_not;
-var stephenreddek$elm_time_picker$TimePicker$AM = {$: 'AM'};
-var stephenreddek$elm_time_picker$TimePicker$PM = {$: 'PM'};
-var stephenreddek$elm_time_picker$TimePicker$periodFromTime = function (time) {
-	return (time.hours >= 12) ? stephenreddek$elm_time_picker$TimePicker$PM : stephenreddek$elm_time_picker$TimePicker$AM;
-};
-var stephenreddek$elm_time_picker$TimePicker$isValidTime = F2(
-	function (settings, time) {
-		var isValidSecond = (!settings.isSecondDisabled(time.seconds)) && ((time.seconds >= 0) && (time.seconds <= 59));
-		var isValidPeriod = settings.use24Hours || (!settings.isPeriodDisabled(
-			stephenreddek$elm_time_picker$TimePicker$periodFromTime(time)));
-		var isValidMinute = (!settings.isMinuteDisabled(time.minutes)) && ((time.minutes >= 0) && (time.minutes <= 59));
-		var isValidHour = (!settings.isHourDisabled(time.hours)) && ((time.hours >= 0) && (time.hours <= 23));
-		return isValidHour && (isValidMinute && (isValidSecond && isValidPeriod));
-	});
-var elm$core$Result$andThen = F2(
-	function (callback, result) {
-		if (result.$ === 'Ok') {
-			var value = result.a;
-			return callback(value);
-		} else {
-			var msg = result.a;
-			return elm$core$Result$Err(msg);
-		}
-	});
-var elm$core$Result$fromMaybe = F2(
-	function (err, maybe) {
-		if (maybe.$ === 'Just') {
-			var v = maybe.a;
-			return elm$core$Result$Ok(v);
-		} else {
-			return elm$core$Result$Err(err);
-		}
-	});
-var elm$core$String$isEmpty = function (string) {
-	return string === '';
-};
-var elm$core$String$slice = _String_slice;
-var elm$core$String$toInt = _String_toInt;
-var elm$core$String$trim = _String_trim;
-var elm$regex$Regex$Match = F4(
-	function (match, index, number, submatches) {
-		return {index: index, match: match, number: number, submatches: submatches};
-	});
-var elm$regex$Regex$findAtMost = _Regex_findAtMost;
-var elm$regex$Regex$fromStringWith = _Regex_fromStringWith;
-var elm$regex$Regex$never = _Regex_never;
-var elm$core$String$toLower = _String_toLower;
-var stephenreddek$elm_time_picker$TimePicker$parsePeriod = function (text) {
-	var _n0 = elm$core$String$toLower(text);
-	switch (_n0) {
-		case 'am':
-			return elm$core$Result$Ok(
-				elm$core$Maybe$Just(stephenreddek$elm_time_picker$TimePicker$AM));
-		case 'pm':
-			return elm$core$Result$Ok(
-				elm$core$Maybe$Just(stephenreddek$elm_time_picker$TimePicker$PM));
-		default:
-			return elm$core$Result$Err(_Utils_Tuple0);
-	}
-};
-var elm$core$List$isEmpty = function (xs) {
-	if (!xs.b) {
-		return true;
-	} else {
-		return false;
-	}
-};
-var stephenreddek$elm_time_picker$TimePicker$defaultPeriodIn12HourFormatForInput = F2(
-	function (settings, time) {
-		return settings.use24Hours ? time : (((time.hours > 0) && (time.hours <= 6)) ? _Utils_update(
-			time,
-			{hours: time.hours + 12}) : time);
-	});
-var stephenreddek$elm_time_picker$TimePicker$setTimeWithPeriod = F2(
-	function (period, time) {
-		if (period.$ === 'AM') {
-			return (time.hours >= 12) ? _Utils_update(
-				time,
-				{hours: time.hours - 12}) : time;
-		} else {
-			return (time.hours >= 12) ? time : _Utils_update(
-				time,
-				{hours: time.hours + 12});
-		}
-	});
-var stephenreddek$elm_time_picker$TimePicker$parseTimeParts = F3(
+var author$project$TimePicker$parseTimeParts = F3(
 	function (settings, period, timeParts) {
 		var withPeriod = function (time) {
 			return ((time.hours >= 0) && (time.hours <= 12)) ? A2(
 				elm$core$Maybe$withDefault,
-				A2(stephenreddek$elm_time_picker$TimePicker$defaultPeriodIn12HourFormatForInput, settings, time),
+				A2(author$project$TimePicker$defaultPeriodIn12HourFormatForInput, settings, time),
 				A2(
 					elm$core$Maybe$map,
 					F2(
 						function (b, a) {
-							return A2(stephenreddek$elm_time_picker$TimePicker$setTimeWithPeriod, a, b);
+							return A2(author$project$TimePicker$setTimeWithPeriod, a, b);
 						})(time),
 					period)) : time;
 		};
@@ -5889,7 +5826,7 @@ var stephenreddek$elm_time_picker$TimePicker$parseTimeParts = F3(
 								var setter = _n0.b;
 								return A2(setter, val, timeAcc);
 							}),
-						stephenreddek$elm_time_picker$TimePicker$defaultTime,
+						author$project$TimePicker$defaultTime,
 						A3(
 							elm$core$List$map2,
 							F2(
@@ -5899,7 +5836,55 @@ var stephenreddek$elm_time_picker$TimePicker$parseTimeParts = F3(
 							timeParts,
 							allSetters))))));
 	});
-var stephenreddek$elm_time_picker$TimePicker$parseText = F2(
+var elm$core$Basics$composeR = F3(
+	function (f, g, x) {
+		return g(
+			f(x));
+	});
+var elm$core$Result$andThen = F2(
+	function (callback, result) {
+		if (result.$ === 'Ok') {
+			var value = result.a;
+			return callback(value);
+		} else {
+			var msg = result.a;
+			return elm$core$Result$Err(msg);
+		}
+	});
+var elm$core$Result$fromMaybe = F2(
+	function (err, maybe) {
+		if (maybe.$ === 'Just') {
+			var v = maybe.a;
+			return elm$core$Result$Ok(v);
+		} else {
+			return elm$core$Result$Err(err);
+		}
+	});
+var elm$core$Result$map = F2(
+	function (func, ra) {
+		if (ra.$ === 'Ok') {
+			var a = ra.a;
+			return elm$core$Result$Ok(
+				func(a));
+		} else {
+			var e = ra.a;
+			return elm$core$Result$Err(e);
+		}
+	});
+var elm$core$String$isEmpty = function (string) {
+	return string === '';
+};
+var elm$core$String$slice = _String_slice;
+var elm$core$String$toInt = _String_toInt;
+var elm$core$String$trim = _String_trim;
+var elm$regex$Regex$Match = F4(
+	function (match, index, number, submatches) {
+		return {index: index, match: match, number: number, submatches: submatches};
+	});
+var elm$regex$Regex$findAtMost = _Regex_findAtMost;
+var elm$regex$Regex$fromStringWith = _Regex_fromStringWith;
+var elm$regex$Regex$never = _Regex_never;
+var author$project$TimePicker$parseText = F2(
 	function (settings, text) {
 		var trimmed = elm$core$String$trim(text);
 		var periodRegex = A2(
@@ -5934,7 +5919,7 @@ var stephenreddek$elm_time_picker$TimePicker$parseText = F2(
 				return _Utils_Tuple2(
 					elm$core$String$trim(
 						A3(elm$core$String$slice, 0, periodMatch.index, trimmed)),
-					stephenreddek$elm_time_picker$TimePicker$parsePeriod(periodMatch.match));
+					author$project$TimePicker$parsePeriod(periodMatch.match));
 			} else {
 				return _Utils_Tuple2(
 					trimmed,
@@ -5947,7 +5932,7 @@ var stephenreddek$elm_time_picker$TimePicker$parseText = F2(
 			var parsedPeriod = period.a;
 			return elm$core$String$isEmpty(timeText) ? elm$core$Result$Ok(elm$core$Maybe$Nothing) : A2(
 				elm$core$Result$andThen,
-				A2(stephenreddek$elm_time_picker$TimePicker$parseTimeParts, settings, parsedPeriod),
+				A2(author$project$TimePicker$parseTimeParts, settings, parsedPeriod),
 				combineTimeParts(
 					A2(
 						elm$core$List$map,
@@ -5960,32 +5945,41 @@ var stephenreddek$elm_time_picker$TimePicker$parseText = F2(
 			return elm$core$Result$Err(_Utils_Tuple0);
 		}
 	});
-var stephenreddek$elm_time_picker$TimePicker$update = F3(
+var elm$core$Result$withDefault = F2(
+	function (def, result) {
+		if (result.$ === 'Ok') {
+			var a = result.a;
+			return a;
+		} else {
+			return def;
+		}
+	});
+var author$project$TimePicker$update = F3(
 	function (settings, msg, _n0) {
 		var model = _n0.a;
 		var value = model.value;
 		switch (msg.$) {
 			case 'Clear':
 				return _Utils_Tuple2(
-					stephenreddek$elm_time_picker$TimePicker$TimePicker(
+					author$project$TimePicker$TimePicker(
 						_Utils_update(
 							model,
 							{open: false, value: elm$core$Maybe$Nothing})),
-					stephenreddek$elm_time_picker$TimePicker$Changed(elm$core$Maybe$Nothing));
+					author$project$TimePicker$Changed(elm$core$Maybe$Nothing));
 			case 'Focus':
 				return _Utils_Tuple2(
-					stephenreddek$elm_time_picker$TimePicker$TimePicker(
+					author$project$TimePicker$TimePicker(
 						_Utils_update(
 							model,
 							{open: true})),
-					stephenreddek$elm_time_picker$TimePicker$NoChange);
+					author$project$TimePicker$NoChange);
 			case 'Blur':
 				return _Utils_Tuple2(
-					stephenreddek$elm_time_picker$TimePicker$TimePicker(
+					author$project$TimePicker$TimePicker(
 						_Utils_update(
 							model,
 							{open: false})),
-					stephenreddek$elm_time_picker$TimePicker$NoChange);
+					author$project$TimePicker$NoChange);
 			case 'SelectHour':
 				var hours = msg.a;
 				var updatedTime = function () {
@@ -5998,75 +5992,75 @@ var stephenreddek$elm_time_picker$TimePicker$update = F3(
 					} else {
 						return elm$core$Maybe$Just(
 							A2(
-								stephenreddek$elm_time_picker$TimePicker$defaultPeriodIn12HourFormatForSelection,
+								author$project$TimePicker$defaultPeriodIn12HourFormatForSelection,
 								settings,
 								_Utils_update(
-									stephenreddek$elm_time_picker$TimePicker$defaultTime,
+									author$project$TimePicker$defaultTime,
 									{hours: hours})));
 					}
 				}();
 				return _Utils_Tuple2(
-					stephenreddek$elm_time_picker$TimePicker$TimePicker(
+					author$project$TimePicker$TimePicker(
 						_Utils_update(
 							model,
 							{inputText: elm$core$Maybe$Nothing, value: updatedTime})),
-					stephenreddek$elm_time_picker$TimePicker$Changed(updatedTime));
+					author$project$TimePicker$Changed(updatedTime));
 			case 'SelectMinute':
 				var minutes = msg.a;
-				var timeToUpdate = A2(elm$core$Maybe$withDefault, stephenreddek$elm_time_picker$TimePicker$defaultTime, value);
+				var timeToUpdate = A2(elm$core$Maybe$withDefault, author$project$TimePicker$defaultTime, value);
 				var updatedTime = elm$core$Maybe$Just(
 					_Utils_update(
 						timeToUpdate,
 						{minutes: minutes}));
 				return _Utils_Tuple2(
-					stephenreddek$elm_time_picker$TimePicker$TimePicker(
+					author$project$TimePicker$TimePicker(
 						_Utils_update(
 							model,
 							{inputText: elm$core$Maybe$Nothing, value: updatedTime})),
-					stephenreddek$elm_time_picker$TimePicker$Changed(updatedTime));
+					author$project$TimePicker$Changed(updatedTime));
 			case 'SelectSecond':
 				var seconds = msg.a;
-				var timeToUpdate = A2(elm$core$Maybe$withDefault, stephenreddek$elm_time_picker$TimePicker$defaultTime, value);
+				var timeToUpdate = A2(elm$core$Maybe$withDefault, author$project$TimePicker$defaultTime, value);
 				var updatedTime = elm$core$Maybe$Just(
 					_Utils_update(
 						timeToUpdate,
 						{seconds: seconds}));
 				return _Utils_Tuple2(
-					stephenreddek$elm_time_picker$TimePicker$TimePicker(
+					author$project$TimePicker$TimePicker(
 						_Utils_update(
 							model,
 							{inputText: elm$core$Maybe$Nothing, value: updatedTime})),
-					stephenreddek$elm_time_picker$TimePicker$Changed(updatedTime));
+					author$project$TimePicker$Changed(updatedTime));
 			case 'SelectPeriod':
 				var period = msg.a;
 				var updatedTime = elm$core$Maybe$Just(
 					A2(
-						stephenreddek$elm_time_picker$TimePicker$setTimeWithPeriod,
+						author$project$TimePicker$setTimeWithPeriod,
 						period,
-						A2(elm$core$Maybe$withDefault, stephenreddek$elm_time_picker$TimePicker$defaultTime, value)));
+						A2(elm$core$Maybe$withDefault, author$project$TimePicker$defaultTime, value)));
 				return _Utils_Tuple2(
-					stephenreddek$elm_time_picker$TimePicker$TimePicker(
+					author$project$TimePicker$TimePicker(
 						_Utils_update(
 							model,
 							{inputText: elm$core$Maybe$Nothing, value: updatedTime})),
-					stephenreddek$elm_time_picker$TimePicker$Changed(updatedTime));
+					author$project$TimePicker$Changed(updatedTime));
 			case 'NoOp':
 				return _Utils_Tuple2(
-					stephenreddek$elm_time_picker$TimePicker$TimePicker(model),
-					stephenreddek$elm_time_picker$TimePicker$NoChange);
+					author$project$TimePicker$TimePicker(model),
+					author$project$TimePicker$NoChange);
 			case 'TextChanged':
 				var text = msg.a;
 				return _Utils_Tuple2(
-					stephenreddek$elm_time_picker$TimePicker$TimePicker(
+					author$project$TimePicker$TimePicker(
 						_Utils_update(
 							model,
 							{
 								inputText: elm$core$Maybe$Just(text)
 							})),
-					stephenreddek$elm_time_picker$TimePicker$NoChange);
+					author$project$TimePicker$NoChange);
 			default:
 				var text = msg.a;
-				var parsedTime = A2(stephenreddek$elm_time_picker$TimePicker$parseText, settings, text);
+				var parsedTime = A2(author$project$TimePicker$parseText, settings, text);
 				var isValidInput = A2(
 					elm$core$Result$withDefault,
 					false,
@@ -6075,19 +6069,26 @@ var stephenreddek$elm_time_picker$TimePicker$update = F3(
 						A2(
 							elm$core$Basics$composeR,
 							elm$core$Maybe$map(
-								stephenreddek$elm_time_picker$TimePicker$isValidTime(settings)),
+								author$project$TimePicker$isValidTime(settings)),
 							elm$core$Maybe$withDefault(true)),
 						parsedTime));
 				var updatedValue = isValidInput ? A2(elm$core$Result$withDefault, value, parsedTime) : value;
-				var timeEvent = _Utils_eq(updatedValue, value) ? stephenreddek$elm_time_picker$TimePicker$NoChange : stephenreddek$elm_time_picker$TimePicker$Changed(updatedValue);
+				var timeEvent = _Utils_eq(updatedValue, value) ? author$project$TimePicker$NoChange : author$project$TimePicker$Changed(updatedValue);
 				return _Utils_Tuple2(
-					stephenreddek$elm_time_picker$TimePicker$TimePicker(
+					author$project$TimePicker$TimePicker(
 						_Utils_update(
 							model,
 							{inputText: elm$core$Maybe$Nothing, value: updatedValue})),
 					timeEvent);
 		}
 	});
+var elm$core$Platform$Cmd$batch = _Platform_batch;
+var elm$core$Platform$Cmd$none = elm$core$Platform$Cmd$batch(_List_Nil);
+var elm$time$Time$Posix = function (a) {
+	return {$: 'Posix', a: a};
+};
+var elm$time$Time$millisToPosix = elm$time$Time$Posix;
+var elm$time$Time$now = _Time_now(elm$time$Time$millisToPosix);
 var author$project$Main$update = F2(
 	function (msg, bigmodel) {
 		if (bigmodel.$ === 'GettingTimeZone') {
@@ -6095,14 +6096,7 @@ var author$project$Main$update = F2(
 				var zone = msg.a;
 				return _Utils_Tuple2(
 					author$project$Main$TimeZoneLoaded(
-						{
-							allergied: false,
-							breakfast: author$project$Main$HaveNot,
-							dinner: author$project$Main$HaveNot,
-							dogs: author$project$Main$initDogs,
-							timePicker: stephenreddek$elm_time_picker$TimePicker$init(elm$core$Maybe$Nothing),
-							zone: zone
-						}),
+						{allergied: false, breakfast: author$project$Main$HaveNot, dinner: author$project$Main$HaveNot, dogs: author$project$Main$initDogs, timePicker: elm$core$Maybe$Nothing, zone: zone}),
 					elm$core$Platform$Cmd$none);
 			} else {
 				return _Utils_Tuple2(bigmodel, elm$core$Platform$Cmd$none);
@@ -6219,26 +6213,50 @@ var author$project$Main$update = F2(
 						elm$core$Platform$Cmd$none);
 				case 'ShowATimePicker':
 					var occurence = msg.a;
-					return _Utils_Tuple2(bigmodel, elm$core$Platform$Cmd$none);
-				case 'GotTimePickerMsg':
-					var m = msg.a;
-					var _n5 = A3(stephenreddek$elm_time_picker$TimePicker$update, stephenreddek$elm_time_picker$TimePicker$defaultSettings, m, model.timePicker);
-					var updatedPicker = _n5.a;
+					var tp = author$project$TimePicker$init(elm$core$Maybe$Nothing);
+					var _n5 = A3(author$project$TimePicker$update, author$project$TimePicker$defaultSettings, author$project$TimePicker$NoOp, tp);
+					var updatedTp = _n5.a;
 					var timeEvent = _n5.b;
 					return _Utils_Tuple2(
 						author$project$Main$TimeZoneLoaded(
 							_Utils_update(
 								model,
-								{timePicker: updatedPicker})),
+								{
+									timePicker: elm$core$Maybe$Just(updatedTp)
+								})),
 						elm$core$Platform$Cmd$none);
+				case 'CloseAndUpdateTime':
+					return _Utils_Tuple2(
+						author$project$Main$TimeZoneLoaded(
+							_Utils_update(
+								model,
+								{timePicker: elm$core$Maybe$Nothing})),
+						elm$core$Platform$Cmd$none);
+				case 'GotTimePickerMsg':
+					var m = msg.a;
+					var _n6 = model.timePicker;
+					if (_n6.$ === 'Just') {
+						var tp = _n6.a;
+						var _n7 = A3(author$project$TimePicker$update, author$project$TimePicker$defaultSettings, m, tp);
+						var updatedPicker = _n7.a;
+						var timeEvent = _n7.b;
+						return _Utils_Tuple2(
+							author$project$Main$TimeZoneLoaded(
+								_Utils_update(
+									model,
+									{
+										timePicker: elm$core$Maybe$Just(updatedPicker)
+									})),
+							elm$core$Platform$Cmd$none);
+					} else {
+						return _Utils_Tuple2(bigmodel, elm$core$Platform$Cmd$none);
+					}
 				default:
 					return _Utils_Tuple2(bigmodel, elm$core$Platform$Cmd$none);
 			}
 		}
 	});
-var author$project$Main$GotTimePickerMsg = function (a) {
-	return {$: 'GotTimePickerMsg', a: a};
-};
+var author$project$Main$CloseAndUpdateTime = {$: 'CloseAndUpdateTime'};
 var author$project$Main$JustBreakfasted = {$: 'JustBreakfasted'};
 var author$project$Main$JustDinnered = {$: 'JustDinnered'};
 var author$project$Main$JustPeed = function (a) {
@@ -9019,588 +9037,70 @@ var author$project$Main$viewMeal = F3(
 					statusHtml
 				]));
 	});
-var elm$virtual_dom$VirtualDom$map = _VirtualDom_map;
-var elm$html$Html$map = elm$virtual_dom$VirtualDom$map;
-var rtfeldman$elm_css$VirtualDom$Styled$unstyledNode = rtfeldman$elm_css$VirtualDom$Styled$Unstyled;
-var rtfeldman$elm_css$Html$Styled$fromUnstyled = rtfeldman$elm_css$VirtualDom$Styled$unstyledNode;
-var elm$html$Html$a = _VirtualDom_node('a');
-var elm$html$Html$div = _VirtualDom_node('div');
-var elm$html$Html$input = _VirtualDom_node('input');
-var elm$html$Html$Attributes$stringProperty = F2(
-	function (key, string) {
-		return A2(
-			_VirtualDom_property,
-			key,
-			elm$json$Json$Encode$string(string));
-	});
-var elm$html$Html$Attributes$class = elm$html$Html$Attributes$stringProperty('className');
-var elm$core$Tuple$second = function (_n0) {
-	var y = _n0.b;
-	return y;
-};
-var elm$html$Html$Attributes$classList = function (classes) {
-	return elm$html$Html$Attributes$class(
-		A2(
-			elm$core$String$join,
-			' ',
-			A2(
-				elm$core$List$map,
-				elm$core$Tuple$first,
-				A2(elm$core$List$filter, elm$core$Tuple$second, classes))));
-};
-var elm$json$Json$Encode$bool = _Json_wrap;
-var elm$html$Html$Attributes$boolProperty = F2(
-	function (key, bool) {
-		return A2(
-			_VirtualDom_property,
-			key,
-			elm$json$Json$Encode$bool(bool));
-	});
-var elm$html$Html$Attributes$disabled = elm$html$Html$Attributes$boolProperty('disabled');
-var elm$html$Html$Attributes$href = function (url) {
-	return A2(
-		elm$html$Html$Attributes$stringProperty,
-		'href',
-		_VirtualDom_noJavaScriptUri(url));
-};
-var elm$html$Html$Attributes$placeholder = elm$html$Html$Attributes$stringProperty('placeholder');
-var elm$html$Html$Attributes$type_ = elm$html$Html$Attributes$stringProperty('type');
-var elm$html$Html$Attributes$value = elm$html$Html$Attributes$stringProperty('value');
-var elm$html$Html$Events$on = F2(
-	function (event, decoder) {
-		return A2(
-			elm$virtual_dom$VirtualDom$on,
-			event,
-			elm$virtual_dom$VirtualDom$Normal(decoder));
-	});
-var elm$html$Html$Events$onBlur = function (msg) {
-	return A2(
-		elm$html$Html$Events$on,
-		'blur',
-		elm$json$Json$Decode$succeed(msg));
-};
-var elm$html$Html$Events$onClick = function (msg) {
-	return A2(
-		elm$html$Html$Events$on,
-		'click',
-		elm$json$Json$Decode$succeed(msg));
-};
-var elm$html$Html$Events$onFocus = function (msg) {
-	return A2(
-		elm$html$Html$Events$on,
-		'focus',
-		elm$json$Json$Decode$succeed(msg));
-};
-var elm$html$Html$Events$alwaysStop = function (x) {
-	return _Utils_Tuple2(x, true);
-};
-var elm$virtual_dom$VirtualDom$MayStopPropagation = function (a) {
-	return {$: 'MayStopPropagation', a: a};
-};
-var elm$html$Html$Events$stopPropagationOn = F2(
-	function (event, decoder) {
-		return A2(
-			elm$virtual_dom$VirtualDom$on,
-			event,
-			elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
-	});
-var elm$json$Json$Decode$field = _Json_decodeField;
-var elm$json$Json$Decode$at = F2(
-	function (fields, decoder) {
-		return A3(elm$core$List$foldr, elm$json$Json$Decode$field, decoder, fields);
-	});
-var elm$json$Json$Decode$string = _Json_decodeString;
-var elm$html$Html$Events$targetValue = A2(
-	elm$json$Json$Decode$at,
-	_List_fromArray(
-		['target', 'value']),
-	elm$json$Json$Decode$string);
-var elm$html$Html$Events$onInput = function (tagger) {
-	return A2(
-		elm$html$Html$Events$stopPropagationOn,
-		'input',
-		A2(
-			elm$json$Json$Decode$map,
-			elm$html$Html$Events$alwaysStop,
-			A2(elm$json$Json$Decode$map, tagger, elm$html$Html$Events$targetValue)));
-};
-var stephenreddek$elm_time_picker$TimePicker$Blur = {$: 'Blur'};
-var stephenreddek$elm_time_picker$TimePicker$Clear = {$: 'Clear'};
-var stephenreddek$elm_time_picker$TimePicker$Focus = {$: 'Focus'};
-var stephenreddek$elm_time_picker$TimePicker$NoOp = {$: 'NoOp'};
-var stephenreddek$elm_time_picker$TimePicker$SubmitText = function (a) {
-	return {$: 'SubmitText', a: a};
-};
-var stephenreddek$elm_time_picker$TimePicker$TextChanged = function (a) {
-	return {$: 'TextChanged', a: a};
-};
-var stephenreddek$elm_time_picker$TimePicker$cssPrefix = 'elm-time-picker-';
-var stephenreddek$elm_time_picker$TimePicker$paddedFormatter = function (value) {
-	return (value < 10) ? ('0' + elm$core$String$fromInt(value)) : elm$core$String$fromInt(value);
-};
-var stephenreddek$elm_time_picker$TimePicker$hourFormatter = F2(
-	function (settings, value) {
-		return settings.use24Hours ? stephenreddek$elm_time_picker$TimePicker$paddedFormatter(value) : ((!value) ? '12' : ((value > 12) ? elm$core$String$fromInt(value - 12) : elm$core$String$fromInt(value)));
-	});
-var stephenreddek$elm_time_picker$TimePicker$isInAM = function (value) {
-	return A2(
-		elm$core$Maybe$withDefault,
-		false,
-		A2(
-			elm$core$Maybe$map,
-			A2(
-				elm$core$Basics$composeR,
-				function ($) {
-					return $.hours;
-				},
-				function (hours) {
-					return hours < 12;
-				}),
-			value));
-};
-var stephenreddek$elm_time_picker$TimePicker$formatValue = F2(
-	function (settings, time) {
-		var secondsDisplay = settings.showSeconds ? _List_fromArray(
-			[
-				stephenreddek$elm_time_picker$TimePicker$paddedFormatter(time.seconds)
-			]) : _List_Nil;
-		var periodDisplay = (settings.showHours && (!settings.use24Hours)) ? (stephenreddek$elm_time_picker$TimePicker$isInAM(
-			elm$core$Maybe$Just(time)) ? ' AM' : ' PM') : '';
-		var minutesDisplay = settings.showMinutes ? _List_fromArray(
-			[
-				stephenreddek$elm_time_picker$TimePicker$paddedFormatter(time.minutes)
-			]) : _List_Nil;
-		var hoursDisplay = settings.showHours ? _List_fromArray(
-			[
-				A2(stephenreddek$elm_time_picker$TimePicker$hourFormatter, settings, time.hours)
-			]) : _List_Nil;
-		var timePartsDisplay = A2(
-			elm$core$String$join,
-			':',
-			elm$core$List$concat(
-				_List_fromArray(
-					[hoursDisplay, minutesDisplay, secondsDisplay])));
-		return _Utils_ap(timePartsDisplay, periodDisplay);
-	});
-var stephenreddek$elm_time_picker$TimePicker$alwaysStop = function (x) {
-	return _Utils_Tuple2(x, true);
-};
-var stephenreddek$elm_time_picker$TimePicker$onChange = function (handler) {
-	return A2(
-		elm$html$Html$Events$stopPropagationOn,
-		'change',
-		A2(
-			elm$json$Json$Decode$map,
-			stephenreddek$elm_time_picker$TimePicker$alwaysStop,
-			A2(elm$json$Json$Decode$map, handler, elm$html$Html$Events$targetValue)));
-};
-var elm$virtual_dom$VirtualDom$Custom = function (a) {
-	return {$: 'Custom', a: a};
-};
-var elm$html$Html$Events$custom = F2(
-	function (event, decoder) {
-		return A2(
-			elm$virtual_dom$VirtualDom$on,
-			event,
-			elm$virtual_dom$VirtualDom$Custom(decoder));
-	});
-var stephenreddek$elm_time_picker$TimePicker$onWithoutLosingFocus = F2(
-	function (eventName, msg) {
-		return A2(
-			elm$html$Html$Events$custom,
-			eventName,
-			elm$json$Json$Decode$succeed(
-				{message: msg, preventDefault: true, stopPropagation: true}));
-	});
-var elm$html$Html$ul = _VirtualDom_node('ul');
-var stephenreddek$elm_time_picker$TimePicker$SelectHour = function (a) {
-	return {$: 'SelectHour', a: a};
-};
-var stephenreddek$elm_time_picker$TimePicker$SelectMinute = function (a) {
-	return {$: 'SelectMinute', a: a};
-};
-var stephenreddek$elm_time_picker$TimePicker$SelectPeriod = function (a) {
-	return {$: 'SelectPeriod', a: a};
-};
-var stephenreddek$elm_time_picker$TimePicker$SelectSecond = function (a) {
-	return {$: 'SelectSecond', a: a};
-};
-var elm$html$Html$li = _VirtualDom_node('li');
-var elm$html$Html$text = elm$virtual_dom$VirtualDom$text;
-var stephenreddek$elm_time_picker$TimePicker$dropdownOption = F4(
-	function (valueText, isSelected, isDisabled, msg) {
-		var optionalClick = (isDisabled || isSelected) ? _List_Nil : _List_fromArray(
-			[
-				elm$html$Html$Events$onClick(msg)
-			]);
-		return A2(
-			elm$html$Html$li,
-			_Utils_ap(
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$classList(
-						_List_fromArray(
-							[
-								_Utils_Tuple2('elm-time-picker-panel-select-option-selected', isSelected),
-								_Utils_Tuple2('elm-time-picker-panel-select-option-disabled', isDisabled)
-							]))
-					]),
-				optionalClick),
-			_List_fromArray(
-				[
-					elm$html$Html$text(valueText)
-				]));
-	});
-var stephenreddek$elm_time_picker$TimePicker$isInPM = function (value) {
-	return A2(
-		elm$core$Maybe$withDefault,
-		false,
-		A2(
-			elm$core$Maybe$map,
-			A2(
-				elm$core$Basics$composeR,
-				function ($) {
-					return $.hours;
-				},
-				function (hours) {
-					return hours >= 12;
-				}),
-			value));
-};
-var stephenreddek$elm_time_picker$TimePicker$isInPeriod = F2(
-	function (period, model) {
-		if (period.$ === 'AM') {
-			return stephenreddek$elm_time_picker$TimePicker$isInAM(model.value);
-		} else {
-			return stephenreddek$elm_time_picker$TimePicker$isInPM(model.value);
-		}
-	});
-var stephenreddek$elm_time_picker$TimePicker$periodFormatter = function (period) {
-	if (period.$ === 'AM') {
-		return 'AM';
-	} else {
-		return 'PM';
-	}
-};
-var stephenreddek$elm_time_picker$TimePicker$viewDropDown = F2(
-	function (settings, model) {
-		var steppingRange = F3(
-			function (step, minVal, maxVal) {
-				return A2(
-					elm$core$List$map,
-					function (val) {
-						return val * step;
-					},
-					A2(elm$core$List$range, minVal, (maxVal / step) | 0));
-			});
-		var seconds = A3(steppingRange, settings.secondStep, 0, 59);
-		var roundToStep = F2(
-			function (step, val) {
-				return ((val / step) | 0) * step;
-			});
-		var toOption = F6(
-			function (formatter, accessor, isDisabledValue, stepSize, toMsg, value) {
-				var isSelected = _Utils_eq(
-					A2(
-						elm$core$Maybe$map,
-						A2(
-							elm$core$Basics$composeR,
-							accessor,
-							roundToStep(stepSize)),
-						model.value),
-					elm$core$Maybe$Just(value));
-				return A4(
-					stephenreddek$elm_time_picker$TimePicker$dropdownOption,
-					formatter(value),
-					isSelected,
-					isDisabledValue(value),
-					toMsg(value));
-			});
-		var secondOptions = settings.showSeconds ? _List_fromArray(
-			[
-				A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class(stephenreddek$elm_time_picker$TimePicker$cssPrefix + 'panel-select')
-					]),
-				_List_fromArray(
-					[
-						A2(
-						elm$html$Html$ul,
-						_List_Nil,
-						A2(
-							elm$core$List$map,
-							A5(
-								toOption,
-								stephenreddek$elm_time_picker$TimePicker$paddedFormatter,
-								function ($) {
-									return $.seconds;
-								},
-								settings.isSecondDisabled,
-								settings.secondStep,
-								stephenreddek$elm_time_picker$TimePicker$SelectSecond),
-							A2(
-								elm$core$List$filter,
-								function (second) {
-									return (!settings.hideDisabledOptions) || (!settings.isSecondDisabled(second));
-								},
-								seconds)))
-					]))
-			]) : _List_Nil;
-		var periodSelectionOption = function (period) {
-			return ((!settings.hideDisabledOptions) || (!settings.isPeriodDisabled(period))) ? _List_fromArray(
-				[
-					A4(
-					stephenreddek$elm_time_picker$TimePicker$dropdownOption,
-					stephenreddek$elm_time_picker$TimePicker$periodFormatter(period),
-					A2(stephenreddek$elm_time_picker$TimePicker$isInPeriod, period, model),
-					settings.isPeriodDisabled(period),
-					stephenreddek$elm_time_picker$TimePicker$SelectPeriod(period))
-				]) : _List_Nil;
-		};
-		var periodOptions = ((!settings.use24Hours) && settings.showHours) ? _List_fromArray(
-			[
-				A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class(stephenreddek$elm_time_picker$TimePicker$cssPrefix + 'panel-select')
-					]),
-				_List_fromArray(
-					[
-						A2(
-						elm$html$Html$ul,
-						_List_Nil,
-						_Utils_ap(
-							periodSelectionOption(stephenreddek$elm_time_picker$TimePicker$AM),
-							periodSelectionOption(stephenreddek$elm_time_picker$TimePicker$PM)))
-					]))
-			]) : _List_Nil;
-		var minutes = A3(steppingRange, settings.minuteStep, 0, 59);
-		var minuteOptions = settings.showMinutes ? _List_fromArray(
-			[
-				A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class(stephenreddek$elm_time_picker$TimePicker$cssPrefix + 'panel-select')
-					]),
-				_List_fromArray(
-					[
-						A2(
-						elm$html$Html$ul,
-						_List_Nil,
-						A2(
-							elm$core$List$map,
-							A5(
-								toOption,
-								stephenreddek$elm_time_picker$TimePicker$paddedFormatter,
-								function ($) {
-									return $.minutes;
-								},
-								settings.isMinuteDisabled,
-								settings.minuteStep,
-								stephenreddek$elm_time_picker$TimePicker$SelectMinute),
-							A2(
-								elm$core$List$filter,
-								function (minute) {
-									return (!settings.hideDisabledOptions) || (!settings.isMinuteDisabled(minute));
-								},
-								minutes)))
-					]))
-			]) : _List_Nil;
-		var hours = settings.use24Hours ? A3(steppingRange, settings.hourStep, 0, 23) : (stephenreddek$elm_time_picker$TimePicker$isInPM(model.value) ? A3(steppingRange, settings.hourStep, 12, 23) : A3(steppingRange, settings.hourStep, 0, 11));
-		var hourOptions = settings.showHours ? _List_fromArray(
-			[
-				A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class(stephenreddek$elm_time_picker$TimePicker$cssPrefix + 'panel-select')
-					]),
-				_List_fromArray(
-					[
-						A2(
-						elm$html$Html$ul,
-						_List_Nil,
-						A2(
-							elm$core$List$map,
-							A5(
-								toOption,
-								stephenreddek$elm_time_picker$TimePicker$hourFormatter(settings),
-								function ($) {
-									return $.hours;
-								},
-								settings.isHourDisabled,
-								settings.hourStep,
-								stephenreddek$elm_time_picker$TimePicker$SelectHour),
-							A2(
-								elm$core$List$filter,
-								function (hour) {
-									return (!settings.hideDisabledOptions) || (!settings.isHourDisabled(hour));
-								},
-								hours)))
-					]))
-			]) : _List_Nil;
-		return A2(
-			elm$html$Html$div,
-			_List_fromArray(
-				[
-					elm$html$Html$Attributes$class(stephenreddek$elm_time_picker$TimePicker$cssPrefix + 'panel-combobox'),
-					A2(stephenreddek$elm_time_picker$TimePicker$onWithoutLosingFocus, 'mousedown', stephenreddek$elm_time_picker$TimePicker$NoOp),
-					A2(stephenreddek$elm_time_picker$TimePicker$onWithoutLosingFocus, 'mouseup', stephenreddek$elm_time_picker$TimePicker$NoOp)
-				]),
-			_Utils_ap(
-				hourOptions,
-				_Utils_ap(
-					minuteOptions,
-					_Utils_ap(secondOptions, periodOptions))));
-	});
-var stephenreddek$elm_time_picker$TimePicker$view = F2(
-	function (settings, _n0) {
-		var model = _n0.a;
-		var optionsDisplay = (model.open && (!settings.disabled)) ? _List_fromArray(
-			[
-				A2(stephenreddek$elm_time_picker$TimePicker$viewDropDown, settings, model)
-			]) : _List_Nil;
-		var optionalFocusOnClick = (!model.open) ? _List_fromArray(
-			[
-				elm$html$Html$Events$onClick(stephenreddek$elm_time_picker$TimePicker$Focus)
-			]) : _List_Nil;
-		var optionalClear = settings.disabled ? _List_Nil : _List_fromArray(
-			[
-				elm$html$Html$Events$onClick(stephenreddek$elm_time_picker$TimePicker$Clear)
-			]);
-		var clearButton = A2(
-			elm$core$Maybe$withDefault,
-			_List_Nil,
-			A2(
-				elm$core$Maybe$map,
-				function (_n1) {
-					return _List_fromArray(
-						[
-							A2(
-							elm$html$Html$a,
-							_Utils_ap(
-								_List_fromArray(
-									[
-										elm$html$Html$Attributes$class(stephenreddek$elm_time_picker$TimePicker$cssPrefix + 'panel-clear-btn'),
-										elm$html$Html$Attributes$href('#'),
-										A2(stephenreddek$elm_time_picker$TimePicker$onWithoutLosingFocus, 'mousedown', stephenreddek$elm_time_picker$TimePicker$NoOp),
-										A2(stephenreddek$elm_time_picker$TimePicker$onWithoutLosingFocus, 'mouseup', stephenreddek$elm_time_picker$TimePicker$NoOp)
-									]),
-								optionalClear),
-							_List_Nil)
-						]);
-				},
-				model.value));
-		var chosenTimeValue = elm$html$Html$Attributes$value(
-			A2(
-				elm$core$Maybe$withDefault,
-				'',
-				A2(
-					elm$core$Maybe$map,
-					stephenreddek$elm_time_picker$TimePicker$formatValue(settings),
-					model.value)));
-		var inputValue = A2(
-			elm$core$Maybe$withDefault,
-			chosenTimeValue,
-			A2(elm$core$Maybe$map, elm$html$Html$Attributes$value, model.inputText));
-		return A2(
-			elm$html$Html$div,
-			_List_fromArray(
-				[
-					elm$html$Html$Attributes$classList(
-					_List_fromArray(
-						[
-							_Utils_Tuple2(stephenreddek$elm_time_picker$TimePicker$cssPrefix + 'container', true),
-							_Utils_Tuple2(stephenreddek$elm_time_picker$TimePicker$cssPrefix + 'active', model.open)
-						]))
-				]),
-			_List_fromArray(
-				[
-					A2(
-					elm$html$Html$div,
-					_List_fromArray(
-						[
-							elm$html$Html$Attributes$class(stephenreddek$elm_time_picker$TimePicker$cssPrefix + 'inner-container')
-						]),
-					_Utils_ap(
-						_List_fromArray(
-							[
-								A2(
-								elm$html$Html$div,
-								_List_fromArray(
-									[
-										elm$html$Html$Attributes$class(stephenreddek$elm_time_picker$TimePicker$cssPrefix + 'input-container')
-									]),
-								_Utils_ap(
-									_List_fromArray(
-										[
-											A2(
-											elm$html$Html$input,
-											_Utils_ap(
-												_List_fromArray(
-													[
-														elm$html$Html$Attributes$type_('text'),
-														elm$html$Html$Events$onFocus(stephenreddek$elm_time_picker$TimePicker$Focus),
-														elm$html$Html$Events$onBlur(stephenreddek$elm_time_picker$TimePicker$Blur),
-														elm$html$Html$Attributes$placeholder(settings.placeholder),
-														elm$html$Html$Attributes$disabled(settings.disabled),
-														elm$html$Html$Events$onInput(stephenreddek$elm_time_picker$TimePicker$TextChanged),
-														stephenreddek$elm_time_picker$TimePicker$onChange(stephenreddek$elm_time_picker$TimePicker$SubmitText),
-														inputValue
-													]),
-												optionalFocusOnClick),
-											_List_Nil)
-										]),
-									clearButton))
-							]),
-						optionsDisplay))
-				]));
-	});
+var rtfeldman$elm_css$Html$Styled$input = rtfeldman$elm_css$Html$Styled$node('input');
+var rtfeldman$elm_css$Html$Styled$Attributes$value = rtfeldman$elm_css$Html$Styled$Attributes$stringProperty('value');
 var author$project$Main$view = function (model) {
 	if (model.$ === 'GettingTimeZone') {
 		return rtfeldman$elm_css$Html$Styled$text('');
 	} else {
 		var minimodel = model.a;
-		return A2(
-			rtfeldman$elm_css$Html$Styled$div,
-			_List_Nil,
-			_List_fromArray(
-				[
-					A2(
-					rtfeldman$elm_css$Html$Styled$div,
-					_List_Nil,
-					_List_fromArray(
-						[
-							author$project$Main$viewAllergy(minimodel),
-							A3(author$project$Main$viewMeal, author$project$Main$JustBreakfasted, minimodel.breakfast, '🍳'),
-							A3(author$project$Main$viewMeal, author$project$Main$JustDinnered, minimodel.dinner, '🍔')
-						])),
-					A2(
-					rtfeldman$elm_css$Html$Styled$div,
-					_List_Nil,
-					A2(
-						elm$core$List$map,
-						author$project$Main$dogView(minimodel.zone),
-						minimodel.dogs)),
-					A2(
-					rtfeldman$elm_css$Html$Styled$div,
-					_List_fromArray(
-						[
-							rtfeldman$elm_css$Html$Styled$Attributes$class('default-time-picker')
-						]),
-					_List_fromArray(
-						[
-							rtfeldman$elm_css$Html$Styled$fromUnstyled(
-							A2(
-								elm$html$Html$map,
-								author$project$Main$GotTimePickerMsg,
-								A2(stephenreddek$elm_time_picker$TimePicker$view, stephenreddek$elm_time_picker$TimePicker$defaultSettings, minimodel.timePicker)))
-						]))
-				]));
+		var _n1 = minimodel.timePicker;
+		if (_n1.$ === 'Just') {
+			var tp = _n1.a;
+			return A2(
+				rtfeldman$elm_css$Html$Styled$div,
+				_List_Nil,
+				_List_fromArray(
+					[
+						A2(
+						rtfeldman$elm_css$Html$Styled$input,
+						_List_fromArray(
+							[
+								rtfeldman$elm_css$Html$Styled$Attributes$value('9:58AM')
+							]),
+						_List_Nil),
+						A2(
+						rtfeldman$elm_css$Html$Styled$button,
+						_List_fromArray(
+							[
+								rtfeldman$elm_css$Html$Styled$Events$onClick(author$project$Main$CloseAndUpdateTime)
+							]),
+						_List_fromArray(
+							[
+								rtfeldman$elm_css$Html$Styled$text('X')
+							]))
+					]));
+		} else {
+			return A2(
+				rtfeldman$elm_css$Html$Styled$div,
+				_List_Nil,
+				_List_fromArray(
+					[
+						A2(
+						rtfeldman$elm_css$Html$Styled$div,
+						_List_Nil,
+						_List_fromArray(
+							[
+								author$project$Main$viewAllergy(minimodel),
+								A3(author$project$Main$viewMeal, author$project$Main$JustBreakfasted, minimodel.breakfast, '🍳'),
+								A3(author$project$Main$viewMeal, author$project$Main$JustDinnered, minimodel.dinner, '🍔')
+							])),
+						A2(
+						rtfeldman$elm_css$Html$Styled$div,
+						_List_Nil,
+						A2(
+							elm$core$List$map,
+							author$project$Main$dogView(minimodel.zone),
+							minimodel.dogs)),
+						A2(
+						rtfeldman$elm_css$Html$Styled$div,
+						_List_fromArray(
+							[
+								rtfeldman$elm_css$Html$Styled$Attributes$class('default-time-picker')
+							]),
+						_List_Nil)
+					]));
+		}
 	}
 };
 var elm$browser$Browser$External = function (a) {
@@ -9679,6 +9179,7 @@ var elm$browser$Debugger$Overlay$Choose = F2(
 var elm$browser$Debugger$Overlay$goodNews1 = '\nThe good news is that having values like this in your message type is not\nso great in the long run. You are better off using simpler data, like\n';
 var elm$browser$Debugger$Overlay$goodNews2 = '\nfunction can pattern match on that data and call whatever functions, JSON\ndecoders, etc. you need. This makes the code much more explicit and easy to\nfollow for other readers (or you in a few months!)\n';
 var elm$html$Html$code = _VirtualDom_node('code');
+var elm$html$Html$text = elm$virtual_dom$VirtualDom$text;
 var elm$browser$Debugger$Overlay$viewCode = function (name) {
 	return A2(
 		elm$html$Html$code,
@@ -9735,6 +9236,7 @@ var elm$browser$Debugger$Overlay$problemToString = function (problem) {
 			return 'virtual DOM values';
 	}
 };
+var elm$html$Html$li = _VirtualDom_node('li');
 var elm$browser$Debugger$Overlay$viewProblemType = function (_n0) {
 	var name = _n0.name;
 	var problems = _n0.problems;
@@ -9749,7 +9251,22 @@ var elm$browser$Debugger$Overlay$viewProblemType = function (_n0) {
 					A2(elm$core$List$map, elm$browser$Debugger$Overlay$problemToString, problems)) + '.'))
 			]));
 };
+var elm$html$Html$a = _VirtualDom_node('a');
 var elm$html$Html$p = _VirtualDom_node('p');
+var elm$html$Html$ul = _VirtualDom_node('ul');
+var elm$html$Html$Attributes$stringProperty = F2(
+	function (key, string) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			elm$json$Json$Encode$string(string));
+	});
+var elm$html$Html$Attributes$href = function (url) {
+	return A2(
+		elm$html$Html$Attributes$stringProperty,
+		'href',
+		_VirtualDom_noJavaScriptUri(url));
+};
 var elm$browser$Debugger$Overlay$viewBadMetadata = function (_n0) {
 	var message = _n0.message;
 	var problems = _n0.problems;
@@ -9800,8 +9317,22 @@ var elm$browser$Debugger$Overlay$viewBadMetadata = function (_n0) {
 var elm$browser$Debugger$Overlay$Cancel = {$: 'Cancel'};
 var elm$browser$Debugger$Overlay$Proceed = {$: 'Proceed'};
 var elm$html$Html$button = _VirtualDom_node('button');
+var elm$html$Html$div = _VirtualDom_node('div');
 var elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
 var elm$html$Html$Attributes$style = elm$virtual_dom$VirtualDom$style;
+var elm$html$Html$Events$on = F2(
+	function (event, decoder) {
+		return A2(
+			elm$virtual_dom$VirtualDom$on,
+			event,
+			elm$virtual_dom$VirtualDom$Normal(decoder));
+	});
+var elm$html$Html$Events$onClick = function (msg) {
+	return A2(
+		elm$html$Html$Events$on,
+		'click',
+		elm$json$Json$Decode$succeed(msg));
+};
 var elm$browser$Debugger$Overlay$viewButtons = function (buttons) {
 	var btn = F2(
 		function (msg, string) {
@@ -9845,6 +9376,8 @@ var elm$browser$Debugger$Overlay$viewButtons = function (buttons) {
 			]),
 		buttonNodes);
 };
+var elm$virtual_dom$VirtualDom$map = _VirtualDom_map;
+var elm$html$Html$map = elm$virtual_dom$VirtualDom$map;
 var elm$html$Html$Attributes$id = elm$html$Html$Attributes$stringProperty('id');
 var elm$browser$Debugger$Overlay$viewMessage = F4(
 	function (config, title, details, buttons) {
@@ -10555,6 +10088,10 @@ var elm$browser$Debugger$Expando$viewTinyRecordHelp = F3(
 			}
 		}
 	});
+var elm$core$Tuple$second = function (_n0) {
+	var y = _n0.b;
+	return y;
+};
 var elm$browser$Debugger$Expando$view = F2(
 	function (maybeKey, expando) {
 		switch (expando.$) {
@@ -10965,6 +10502,7 @@ var elm$browser$Debugger$Expando$viewSequenceOpen = function (values) {
 var elm$browser$Debugger$Main$ExpandoMsg = function (a) {
 	return {$: 'ExpandoMsg', a: a};
 };
+var elm$html$Html$Attributes$class = elm$html$Html$Attributes$stringProperty('className');
 var elm$html$Html$Attributes$title = elm$html$Html$Attributes$stringProperty('title');
 var elm$browser$Debugger$History$viewMessage = F3(
 	function (currentIndex, index, msg) {
@@ -11434,7 +10972,9 @@ var elm$browser$Debugger$Metadata$Alias = F2(
 	function (args, tipe) {
 		return {args: args, tipe: tipe};
 	});
+var elm$json$Json$Decode$field = _Json_decodeField;
 var elm$json$Json$Decode$list = _Json_decodeList;
+var elm$json$Json$Decode$string = _Json_decodeString;
 var elm$browser$Debugger$Metadata$decodeAlias = A3(
 	elm$json$Json$Decode$map2,
 	elm$browser$Debugger$Metadata$Alias,
@@ -13980,4 +13520,4 @@ var author$project$Main$main = elm$browser$Browser$element(
 		update: author$project$Main$update,
 		view: A2(elm$core$Basics$composeR, author$project$Main$view, rtfeldman$elm_css$Html$Styled$toUnstyled)
 	});
-_Platform_export({'Main':{'init':author$project$Main$main(elm$json$Json$Decode$value)({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.Dog":{"args":[],"type":"{ poops : List.List Main.Occurence, pees : List.List Main.Occurence, name : String.String }"},"Main.Occurence":{"args":[],"type":"{ posix : Time.Posix, pickerOpenForMe : Basics.Bool }"},"Time.Era":{"args":[],"type":"{ start : Basics.Int, offset : Basics.Int }"}},"unions":{"Main.Msg":{"args":[],"tags":{"JustPooped":["Main.Dog"],"JustPeed":["Main.Dog"],"JustAllergied":[],"PeeTime":["Main.Dog","Time.Posix"],"PoopTime":["Main.Dog","Time.Posix"],"GotTimeZone":["Time.Zone"],"JustBreakfasted":[],"JustDinnered":[],"GotTimePickerMsg":["TimePicker.Msg"],"ShowATimePicker":["Main.Occurence"],"Noop":[]}},"Basics.Bool":{"args":[],"tags":{"True":[],"False":[]}},"List.List":{"args":["a"],"tags":{}},"String.String":{"args":[],"tags":{"String":[]}},"Time.Posix":{"args":[],"tags":{"Posix":["Basics.Int"]}},"Time.Zone":{"args":[],"tags":{"Zone":["Basics.Int","List.List Time.Era"]}},"TimePicker.Msg":{"args":[],"tags":{"Clear":[],"Focus":[],"Blur":[],"SelectHour":["Basics.Int"],"SelectMinute":["Basics.Int"],"SelectSecond":["Basics.Int"],"SelectPeriod":["TimePicker.Period"],"NoOp":[],"TextChanged":["String.String"],"SubmitText":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"TimePicker.Period":{"args":[],"tags":{"AM":[],"PM":[]}}}}})}});}(this));
+_Platform_export({'Main':{'init':author$project$Main$main(elm$json$Json$Decode$value)({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.Dog":{"args":[],"type":"{ poops : List.List Main.Occurence, pees : List.List Main.Occurence, name : String.String }"},"Main.Occurence":{"args":[],"type":"{ posix : Time.Posix, pickerOpenForMe : Basics.Bool }"},"Time.Era":{"args":[],"type":"{ start : Basics.Int, offset : Basics.Int }"}},"unions":{"Main.Msg":{"args":[],"tags":{"JustPooped":["Main.Dog"],"JustPeed":["Main.Dog"],"JustAllergied":[],"PeeTime":["Main.Dog","Time.Posix"],"PoopTime":["Main.Dog","Time.Posix"],"GotTimeZone":["Time.Zone"],"JustBreakfasted":[],"JustDinnered":[],"GotTimePickerMsg":["TimePicker.Msg"],"ShowATimePicker":["Main.Occurence"],"CloseAndUpdateTime":[],"Noop":[]}},"TimePicker.Msg":{"args":[],"tags":{"Clear":[],"Focus":[],"Blur":[],"SelectHour":["Basics.Int"],"SelectMinute":["Basics.Int"],"SelectSecond":["Basics.Int"],"SelectPeriod":["TimePicker.Period"],"NoOp":[],"TextChanged":["String.String"],"SubmitText":["String.String"]}},"Basics.Bool":{"args":[],"tags":{"True":[],"False":[]}},"List.List":{"args":["a"],"tags":{}},"String.String":{"args":[],"tags":{"String":[]}},"Time.Posix":{"args":[],"tags":{"Posix":["Basics.Int"]}},"Time.Zone":{"args":[],"tags":{"Zone":["Basics.Int","List.List Time.Era"]}},"TimePicker.Period":{"args":[],"tags":{"AM":[],"PM":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}}}}})}});}(this));

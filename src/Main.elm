@@ -1,16 +1,17 @@
 module Main exposing (..)
 
 import Browser
+import Browser.Dom as Dom
 import Time exposing (Posix)
 import Css exposing (..)
 import Html
 import Html.Styled exposing (..)
-import Html.Styled.Attributes exposing (css, href, src, class)
-import Html.Styled.Events exposing (onClick)
+import Html.Styled.Attributes exposing (css, href, src, class, autofocus)
+import Html.Styled.Events exposing (onClick, onInput)
 import Json.Decode
 import Task
 import DateFormat
-import TimePicker exposing (TimeEvent(..), TimePicker, Msg(..))
+import Array
 
 
 type MealStatus
@@ -32,19 +33,29 @@ type alias Dog =
     }
 
 
+type TimeAdjust
+    = NotInProgress
+    | InProgress Occurence String
+
+
 type alias MiniModel =
     { dogs : List Dog
     , zone : Time.Zone
     , allergied : Bool
     , breakfast : MealStatus
     , dinner : MealStatus
-    , timePicker : Maybe TimePicker
+    , timeAdjust : TimeAdjust
     }
 
 
 type Model
     = GettingTimeZone
     | TimeZoneLoaded MiniModel
+
+
+init : Json.Decode.Value -> ( Model, Cmd Msg )
+init flags =
+    ( GettingTimeZone, Task.perform GotTimeZone Time.here )
 
 
 initDogs =
@@ -59,11 +70,6 @@ initDogs =
     ]
 
 
-init : Json.Decode.Value -> ( Model, Cmd Msg )
-init flags =
-    ( GettingTimeZone, Task.perform GotTimeZone Time.here )
-
-
 type Msg
     = JustPooped Dog
     | JustPeed Dog
@@ -73,8 +79,8 @@ type Msg
     | GotTimeZone Time.Zone
     | JustBreakfasted
     | JustDinnered
-    | GotTimePickerMsg TimePicker.Msg
     | ShowATimePicker Occurence
+    | AdjustmentEvent String
     | CloseAndUpdateTime
     | Noop
 
@@ -91,7 +97,7 @@ update msg bigmodel =
                         , allergied = False
                         , breakfast = HaveNot
                         , dinner = HaveNot
-                        , timePicker = Nothing -- TimePicker.init Nothing
+                        , timeAdjust = NotInProgress
                         }
                     , Cmd.none
                     )
@@ -181,47 +187,132 @@ update msg bigmodel =
                         ( TimeZoneLoaded { model | dinner = newStatus }, Cmd.none )
 
                 ShowATimePicker occurence ->
-                    -- let
-                    --     timePickerSettings =
-                    --         let
-                    --             default =
-                    --                 TimePicker.defaultSettings
-                    --         in
-                    --             { default
-                    --                 | showSeconds = False
-                    --                 , minuteStep = 15
-                    --             }
-                    -- in
                     let
-                        tp =
-                            TimePicker.init Nothing
-
-                        ( updatedTp, timeEvent ) =
-                            TimePicker.update TimePicker.defaultSettings TimePicker.NoOp tp
+                        newTimeAdjust =
+                            InProgress occurence ""
                     in
-                        ( TimeZoneLoaded { model | timePicker = Just updatedTp }, Cmd.none )
+                        ( TimeZoneLoaded { model | timeAdjust = newTimeAdjust }, Task.attempt (\x -> Noop) (Dom.focus "input-adjust") )
+
+                AdjustmentEvent rawInput ->
+                    case model.timeAdjust of
+                        InProgress occurence inputValue ->
+                            ( TimeZoneLoaded { model | timeAdjust = InProgress occurence (rawInput) }, Cmd.none )
+
+                        NotInProgress ->
+                            ( bigmodel, Cmd.none )
 
                 CloseAndUpdateTime ->
-                    ( TimeZoneLoaded { model | timePicker = Nothing }, Cmd.none )
+                    case model.timeAdjust of
+                        InProgress occurence inputValue ->
+                            case parseInputToPosix inputValue model.zone of
+                                Just updatedPosix ->
+                                    let
+                                        newDogs =
+                                            adjustDogOccurence occurence model.dogs updatedPosix
+                                    in
+                                        ( TimeZoneLoaded { model | timeAdjust = NotInProgress, dogs = newDogs }, Cmd.none )
 
-                GotTimePickerMsg m ->
-                    case model.timePicker of
-                        Just tp ->
-                            let
-                                ( updatedPicker, timeEvent ) =
-                                    TimePicker.update TimePicker.defaultSettings m tp
-                            in
-                                ( TimeZoneLoaded { model | timePicker = Just updatedPicker }, Cmd.none )
+                                Nothing ->
+                                    ( TimeZoneLoaded { model | timeAdjust = NotInProgress }, Cmd.none )
 
-                        Nothing ->
-                            ( bigmodel, Cmd.none )
+                        NotInProgress ->
+                            ( TimeZoneLoaded { model | timeAdjust = NotInProgress }, Cmd.none )
 
                 _ ->
                     ( bigmodel, Cmd.none )
 
 
+adjustDogOccurence : Occurence -> List Dog -> Posix -> List Dog
+adjustDogOccurence occurence oldDogs newPosix =
+    List.map
+        (\dog ->
+            let
+                newPoops =
+                    List.map
+                        (\occ ->
+                            if occ == occurence then
+                                { occ | posix = newPosix }
+                            else
+                                occ
+                        )
+                        dog.poops
+
+                newPees =
+                    List.map
+                        (\occ ->
+                            if occ == occurence then
+                                { occ | posix = newPosix }
+                            else
+                                occ
+                        )
+                        dog.pees
+            in
+                { dog | poops = newPoops, pees = newPees }
+        )
+        oldDogs
+
+
+parseInputToPosix : String -> Time.Zone -> Maybe Posix
+parseInputToPosix inputValue timeZone =
+    let
+        timeArray =
+            String.split ":" inputValue
+                |> Array.fromList
+    in
+        timeArray
+            |> Debug.log "somehting"
+            |> Array.get 0
+            |> Maybe.andThen String.toInt
+            |> Maybe.andThen
+                (\x ->
+                    if x < 24 then
+                        Just x
+                    else
+                        Nothing
+                )
+            |> Maybe.map (\x -> ((x + 5) * 60 * 60 * 1000))
+            |> Maybe.map Time.millisToPosix
+
+
 
 -- VIEW
+
+
+view : Model -> Html Msg
+view model =
+    case model of
+        GettingTimeZone ->
+            text ""
+
+        TimeZoneLoaded minimodel ->
+            let
+                timePicker =
+                    case minimodel.timeAdjust of
+                        NotInProgress ->
+                            text ""
+
+                        InProgress occurenceToAdjust inputValue ->
+                            div []
+                                [ input
+                                    [ Html.Styled.Attributes.value inputValue
+                                    , Html.Styled.Attributes.id "input-adjust"
+                                    , onInput AdjustmentEvent
+                                    , autofocus True
+                                    ]
+                                    []
+                                , button [ onClick CloseAndUpdateTime ] [ text "update" ]
+                                ]
+            in
+                div [ class "main-container" ]
+                    [ div []
+                        [ viewAllergy minimodel
+                        , viewMeal JustBreakfasted minimodel.breakfast "🍳"
+                        , viewMeal JustDinnered minimodel.dinner "🍔"
+                        ]
+                    , div []
+                        (List.map (dogView minimodel.zone) minimodel.dogs)
+                    , timePicker
+                    ]
 
 
 largeFont =
@@ -286,33 +377,6 @@ dogView zone dog =
         , (viewWaste zone) (JustPooped dog) "💩" dog.poops
         , (viewWaste zone) (JustPeed dog) "🍋" dog.pees
         ]
-
-
-view : Model -> Html Msg
-view model =
-    case model of
-        GettingTimeZone ->
-            text ""
-
-        TimeZoneLoaded minimodel ->
-            case minimodel.timePicker of
-                Just tp ->
-                    div []
-                        [ input [ Html.Styled.Attributes.value "9:58AM" ] []
-                        , button [ onClick CloseAndUpdateTime ] [ text "X" ]
-                        ]
-
-                Nothing ->
-                    div []
-                        [ div []
-                            [ viewAllergy minimodel
-                            , viewMeal JustBreakfasted minimodel.breakfast "🍳"
-                            , viewMeal JustDinnered minimodel.dinner "🍔"
-                            ]
-                        , div [] (List.map (dogView minimodel.zone) minimodel.dogs)
-                        , div [ class "default-time-picker" ]
-                            []
-                        ]
 
 
 main =

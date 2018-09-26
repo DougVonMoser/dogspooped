@@ -12,6 +12,7 @@ import Json.Decode
 import Task
 import DateFormat
 import Array
+import Char
 
 
 type MealStatus
@@ -194,11 +195,18 @@ update msg bigmodel =
                         ( TimeZoneLoaded { model | timeAdjust = newTimeAdjust }, Task.attempt (\x -> Noop) (Dom.focus "input-adjust") )
 
                 AdjustmentEvent rawInput ->
-                    case model.timeAdjust of
-                        InProgress occurence inputValue ->
-                            ( TimeZoneLoaded { model | timeAdjust = InProgress occurence (rawInput) }, Cmd.none )
+                    case ( goodDigitInput rawInput, model.timeAdjust ) of
+                        ( True, InProgress occurence inputValue ) ->
+                            let
+                                updatedInput =
+                                    if String.length rawInput == 2 then
+                                        rawInput ++ ":"
+                                    else
+                                        rawInput
+                            in
+                                ( TimeZoneLoaded { model | timeAdjust = InProgress occurence (updatedInput) }, Cmd.none )
 
-                        NotInProgress ->
+                        ( _, _ ) ->
                             ( bigmodel, Cmd.none )
 
                 CloseAndUpdateTime ->
@@ -220,6 +228,15 @@ update msg bigmodel =
 
                 _ ->
                     ( bigmodel, Cmd.none )
+
+
+goodDigitInput : String -> Bool
+goodDigitInput raw =
+    String.toList raw
+        |> List.reverse
+        |> List.head
+        |> Maybe.map Char.isDigit
+        |> Maybe.withDefault False
 
 
 adjustDogOccurence : Occurence -> List Dog -> Posix -> List Dog
@@ -258,20 +275,37 @@ parseInputToPosix inputValue timeZone =
         timeArray =
             String.split ":" inputValue
                 |> Array.fromList
+
+        hours =
+            timeArray
+                |> Array.get 0
+                |> Maybe.andThen String.toInt
+                |> Maybe.andThen
+                    (\x ->
+                        if x <= 24 then
+                            Just x
+                        else
+                            Nothing
+                    )
+
+        minutes =
+            timeArray
+                |> Array.get 1
+                |> Maybe.andThen String.toInt
+                |> Maybe.andThen
+                    (\x ->
+                        if x <= 59 then
+                            Just x
+                        else
+                            Nothing
+                    )
     in
-        timeArray
-            |> Debug.log "somehting"
-            |> Array.get 0
-            |> Maybe.andThen String.toInt
-            |> Maybe.andThen
-                (\x ->
-                    if x < 24 then
-                        Just x
-                    else
-                        Nothing
-                )
-            |> Maybe.map (\x -> ((x + 5) * 60 * 60 * 1000))
-            |> Maybe.map Time.millisToPosix
+        case ( hours, minutes ) of
+            ( Just h, Just m ) ->
+                Just ((((h + 5) * 60) + m) * 60 * 1000 |> Time.millisToPosix)
+
+            ( _, _ ) ->
+                Nothing
 
 
 
@@ -292,18 +326,28 @@ view model =
                             text ""
 
                         InProgress occurenceToAdjust inputValue ->
-                            div []
-                                [ input
-                                    [ Html.Styled.Attributes.value inputValue
-                                    , Html.Styled.Attributes.id "input-adjust"
-                                    , onInput AdjustmentEvent
-                                    , autofocus True
+                            div
+                                [ css (inputContainerStyle ++ [ zIndex (int 1) ])
+                                ]
+                                [ div [ css [ zIndex (int 4) ] ]
+                                    [ input
+                                        [ css [ fontSize (px 80), width (px 250) ]
+                                        , Html.Styled.Attributes.value inputValue
+                                        , Html.Styled.Attributes.id "input-adjust"
+                                        , onInput AdjustmentEvent
+                                        ]
+                                        []
+                                    , button
+                                        [ css
+                                            [ backgroundColor (rgb 255 255 255)
+                                            ]
+                                        , onClick CloseAndUpdateTime
+                                        ]
+                                        [ text "update" ]
                                     ]
-                                    []
-                                , button [ onClick CloseAndUpdateTime ] [ text "update" ]
                                 ]
             in
-                div [ class "main-container" ]
+                div [ css [ width (vw 100), height (vh 100), overflow hidden ] ]
                     [ div []
                         [ viewAllergy minimodel
                         , viewMeal JustBreakfasted minimodel.breakfast "🍳"
@@ -379,15 +423,6 @@ dogView zone dog =
         ]
 
 
-main =
-    Browser.element
-        { init = init
-        , subscriptions = (\x -> Sub.none)
-        , view = view >> toUnstyled
-        , update = update
-        }
-
-
 
 -- Beckfast 🍳
 -- Dinner 🍔
@@ -408,3 +443,27 @@ viewMeal msg mealStatus icon =
                     text "all eated"
     in
         div [] [ wasteButton msg icon, statusHtml ]
+
+
+inputContainerStyle =
+    [ position absolute
+    , backgroundColor (rgb 6 6 6)
+    , opacity (Css.num 0.5)
+    , top zero
+    , left zero
+    , width (pct 100)
+    , height (pct 100)
+    , border3 (px 2) solid (rgb 12 12 12)
+    , displayFlex
+    , justifyContent center
+    , alignItems center
+    ]
+
+
+main =
+    Browser.element
+        { init = init
+        , subscriptions = (\x -> Sub.none)
+        , view = view >> toUnstyled
+        , update = update
+        }

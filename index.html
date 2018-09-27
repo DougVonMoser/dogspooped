@@ -5598,6 +5598,10 @@ var author$project$Main$adjustDogOccurence = F3(
 var author$project$Main$KeepEditing = function (a) {
 	return {$: 'KeepEditing', a: a};
 };
+var elm$core$String$length = _String_length;
+var author$project$Main$addAColonMaybe = function (stringy) {
+	return (elm$core$String$length(stringy) === 2) ? (stringy + ':') : stringy;
+};
 var elm$core$Debug$log = _Debug_log;
 var elm$core$List$head = function (list) {
 	if (list.b) {
@@ -5650,7 +5654,10 @@ var author$project$Main$goodDigitInput = function (raw) {
 var author$project$Main$groomGoodInput = F2(
 	function (existingInput, userAddedInput) {
 		var pipeline = function (userAdded) {
-			return author$project$Main$goodDigitInput(userAdded);
+			return A2(
+				elm$core$Maybe$map,
+				author$project$Main$addAColonMaybe,
+				author$project$Main$goodDigitInput(userAdded));
 		};
 		var _n0 = pipeline(userAddedInput);
 		if (_n0.$ === 'Just') {
@@ -6580,7 +6587,6 @@ var elm$core$String$left = F2(
 	function (n, string) {
 		return (n < 1) ? '' : A3(elm$core$String$slice, 0, n, string);
 	});
-var elm$core$String$length = _String_length;
 var elm$core$Basics$negate = function (n) {
 	return -n;
 };

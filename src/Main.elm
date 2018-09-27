@@ -253,6 +253,7 @@ groomGoodInput existingInput userAddedInput =
     let
         pipeline userAdded =
             goodDigitInput userAdded
+                |> Maybe.map addAColonMaybe
     in
         case pipeline userAddedInput of
             Just updatedInput ->
@@ -260,6 +261,14 @@ groomGoodInput existingInput userAddedInput =
 
             Nothing ->
                 KeepEditing existingInput
+
+
+addAColonMaybe : String -> String
+addAColonMaybe stringy =
+    if String.length stringy == 2 then
+        stringy ++ ":"
+    else
+        stringy
 
 
 

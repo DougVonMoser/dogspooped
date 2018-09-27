@@ -88,7 +88,8 @@ type Msg
     | ShowATimePicker Occurence
     | AdjustmentEvent String
     | CloseAndUpdateTime
-    | TestPointer (Result Dom.Error Dom.Element)
+    | FoundOccurenceEl (Result Dom.Error Dom.Element)
+    | FoundTimeAdjustEl (Result Dom.Error Dom.Element)
     | Noop
 
 
@@ -199,7 +200,7 @@ update msg bigmodel =
                         ( TimeZoneLoaded { model | timeAdjust = newTimeAdjust }
                         , Cmd.batch
                             [ Task.attempt (\x -> Noop) (Dom.focus "input-adjust")
-                            , Task.attempt (TestPointer) (Dom.getElement "test")
+                            , Task.attempt (FoundOccurenceEl) (Dom.getElement "test")
                             ]
                         )
 
@@ -227,7 +228,7 @@ update msg bigmodel =
                         _ ->
                             ( bigmodel, Cmd.none )
 
-                TestPointer elementFindResult ->
+                FoundOccurenceEl elementFindResult ->
                     case elementFindResult of
                         Ok element ->
                             case model.timeAdjust of
@@ -250,6 +251,28 @@ update msg bigmodel =
                         _ ->
                             ( bigmodel, Cmd.none )
 
+                --                FoundTimeAdjustEl elementFindResult ->
+                --                    case elementFindResult of
+                --                        Ok element ->
+                --                            case model.timeAdjust of
+                --                                InProgress progressRecord ->
+                --                                    ( TimeZoneLoaded
+                --                                        { model
+                --                                            | timeAdjust =
+                --                                                InProgress
+                --                                                    { occurence = progressRecord.occurence
+                --                                                    , inputValue = progressRecord.inputValue
+                --                                                    , pointer = GotOriginElement element
+                --                                                    }
+                --                                        }
+                --                                    , Cmd.none
+                --                                    )
+                --
+                --                                _ ->
+                --                                    ( bigmodel, Cmd.none )
+                --
+                --                        _ ->
+                --                            ( bigmodel, Cmd.none )
                 CloseAndUpdateTime ->
                     case model.timeAdjust of
                         InProgress progressRecord ->

@@ -5550,6 +5550,9 @@ var author$project$Main$init = function (flags) {
 };
 var author$project$Main$Eated = {$: 'Eated'};
 var author$project$Main$FindingPositionThingies = {$: 'FindingPositionThingies'};
+var author$project$Main$FoundOccurenceEl = function (a) {
+	return {$: 'FoundOccurenceEl', a: a};
+};
 var author$project$Main$GotOriginElement = function (a) {
 	return {$: 'GotOriginElement', a: a};
 };
@@ -5568,9 +5571,6 @@ var author$project$Main$PoopTime = F2(
 	function (a, b) {
 		return {$: 'PoopTime', a: a, b: b};
 	});
-var author$project$Main$TestPointer = function (a) {
-	return {$: 'TestPointer', a: a};
-};
 var author$project$Main$TimeZoneLoaded = function (a) {
 	return {$: 'TimeZoneLoaded', a: a};
 };
@@ -10007,7 +10007,7 @@ var author$project$Main$update = F2(
 									elm$browser$Browser$Dom$focus('input-adjust')),
 									A2(
 									elm$core$Task$attempt,
-									author$project$Main$TestPointer,
+									author$project$Main$FoundOccurenceEl,
 									elm$browser$Browser$Dom$getElement('test'))
 								])));
 				case 'AdjustmentEvent':
@@ -10033,7 +10033,7 @@ var author$project$Main$update = F2(
 					} else {
 						return _Utils_Tuple2(bigmodel, elm$core$Platform$Cmd$none);
 					}
-				case 'TestPointer':
+				case 'FoundOccurenceEl':
 					var elementFindResult = msg.a;
 					if (elementFindResult.$ === 'Ok') {
 						var element = elementFindResult.a;
@@ -13561,7 +13561,7 @@ var author$project$Main$main = elm$browser$Browser$element(
 		update: author$project$Main$update,
 		view: A2(elm$core$Basics$composeR, author$project$Main$view, rtfeldman$elm_css$Html$Styled$toUnstyled)
 	});
-_Platform_export({'Main':{'init':author$project$Main$main(elm$json$Json$Decode$value)({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.Dog":{"args":[],"type":"{ poops : List.List Main.Occurence, pees : List.List Main.Occurence, name : String.String }"},"Main.Occurence":{"args":[],"type":"{ posix : Time.Posix, pickerOpenForMe : Basics.Bool }"},"Browser.Dom.Element":{"args":[],"type":"{ scene : { width : Basics.Float, height : Basics.Float }, viewport : { x : Basics.Float, y : Basics.Float, width : Basics.Float, height : Basics.Float }, element : { x : Basics.Float, y : Basics.Float, width : Basics.Float, height : Basics.Float } }"},"Time.Era":{"args":[],"type":"{ start : Basics.Int, offset : Basics.Int }"}},"unions":{"Main.Msg":{"args":[],"tags":{"JustPooped":["Main.Dog"],"JustPeed":["Main.Dog"],"JustAllergied":[],"PeeTime":["Main.Dog","Time.Posix"],"PoopTime":["Main.Dog","Time.Posix"],"GotTimeZone":["Time.Zone"],"JustBreakfasted":[],"JustDinnered":[],"ShowATimePicker":["Main.Occurence"],"AdjustmentEvent":["String.String"],"CloseAndUpdateTime":[],"TestPointer":["Result.Result Browser.Dom.Error Browser.Dom.Element"],"Noop":[]}},"Browser.Dom.Error":{"args":[],"tags":{"NotFound":["String.String"]}},"Basics.Bool":{"args":[],"tags":{"True":[],"False":[]}},"Basics.Float":{"args":[],"tags":{"Float":[]}},"List.List":{"args":["a"],"tags":{}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}},"Time.Posix":{"args":[],"tags":{"Posix":["Basics.Int"]}},"Time.Zone":{"args":[],"tags":{"Zone":["Basics.Int","List.List Time.Era"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}}}}})}});}(this));
+_Platform_export({'Main':{'init':author$project$Main$main(elm$json$Json$Decode$value)({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.Dog":{"args":[],"type":"{ poops : List.List Main.Occurence, pees : List.List Main.Occurence, name : String.String }"},"Main.Occurence":{"args":[],"type":"{ posix : Time.Posix, pickerOpenForMe : Basics.Bool }"},"Browser.Dom.Element":{"args":[],"type":"{ scene : { width : Basics.Float, height : Basics.Float }, viewport : { x : Basics.Float, y : Basics.Float, width : Basics.Float, height : Basics.Float }, element : { x : Basics.Float, y : Basics.Float, width : Basics.Float, height : Basics.Float } }"},"Time.Era":{"args":[],"type":"{ start : Basics.Int, offset : Basics.Int }"}},"unions":{"Main.Msg":{"args":[],"tags":{"JustPooped":["Main.Dog"],"JustPeed":["Main.Dog"],"JustAllergied":[],"PeeTime":["Main.Dog","Time.Posix"],"PoopTime":["Main.Dog","Time.Posix"],"GotTimeZone":["Time.Zone"],"JustBreakfasted":[],"JustDinnered":[],"ShowATimePicker":["Main.Occurence"],"AdjustmentEvent":["String.String"],"CloseAndUpdateTime":[],"FoundOccurenceEl":["Result.Result Browser.Dom.Error Browser.Dom.Element"],"FoundTimeAdjustEl":["Result.Result Browser.Dom.Error Browser.Dom.Element"],"Noop":[]}},"Browser.Dom.Error":{"args":[],"tags":{"NotFound":["String.String"]}},"Basics.Bool":{"args":[],"tags":{"True":[],"False":[]}},"Basics.Float":{"args":[],"tags":{"Float":[]}},"List.List":{"args":["a"],"tags":{}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}},"Time.Posix":{"args":[],"tags":{"Posix":["Basics.Int"]}},"Time.Zone":{"args":[],"tags":{"Zone":["Basics.Int","List.List Time.Era"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}}}}})}});}(this));
 
 var app = Elm.Main.init({ node: document.getElementById("elm-f0111bc4e658d0f98db96260c16f7e49") });
 if (document.getElementById("elm-f0111bc4e658d0f98db96260c16f7e49"))

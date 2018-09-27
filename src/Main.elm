@@ -41,6 +41,7 @@ type TimeAdjust
 
 type Pointer
     = FindingPositionThingies
+    | GotOriginElement Dom.Element
 
 
 type alias MiniModel =
@@ -87,6 +88,7 @@ type Msg
     | ShowATimePicker Occurence
     | AdjustmentEvent String
     | CloseAndUpdateTime
+    | TestPointer (Result Dom.Error Dom.Element)
     | Noop
 
 
@@ -197,6 +199,7 @@ update msg bigmodel =
                         ( TimeZoneLoaded { model | timeAdjust = newTimeAdjust }
                         , Cmd.batch
                             [ Task.attempt (\x -> Noop) (Dom.focus "input-adjust")
+                            , Task.attempt (TestPointer) (Dom.getElement "test")
                             ]
                         )
 
@@ -218,6 +221,29 @@ update msg bigmodel =
                                     )
 
                                 -- implement escape, goodAndDoneAdjustment
+                                _ ->
+                                    ( bigmodel, Cmd.none )
+
+                        _ ->
+                            ( bigmodel, Cmd.none )
+
+                TestPointer elementFindResult ->
+                    case elementFindResult of
+                        Ok element ->
+                            case model.timeAdjust of
+                                InProgress progressRecord ->
+                                    ( TimeZoneLoaded
+                                        { model
+                                            | timeAdjust =
+                                                InProgress
+                                                    { occurence = progressRecord.occurence
+                                                    , inputValue = progressRecord.inputValue
+                                                    , pointer = GotOriginElement element
+                                                    }
+                                        }
+                                    , Cmd.none
+                                    )
+
                                 _ ->
                                     ( bigmodel, Cmd.none )
 
@@ -389,19 +415,32 @@ view model =
 
         TimeZoneLoaded minimodel ->
             let
+                testPointer =
+                    case minimodel.timeAdjust of
+                        NotInProgress ->
+                            text ""
+
+                        InProgress progressRecord ->
+                            case progressRecord.pointer of
+                                GotOriginElement occurenceSourceEl ->
+                                    generatePointerElement occurenceSourceEl
+
+                                _ ->
+                                    text ""
+
                 timePicker =
                     case minimodel.timeAdjust of
                         NotInProgress ->
                             text ""
 
-                        InProgress adjustmentRecord ->
+                        InProgress progressRecord ->
                             div
                                 [ css (inputContainerStyle ++ [ zIndex (int 1) ])
                                 ]
                                 [ div [ css [ zIndex (int 4) ] ]
                                     [ input
                                         [ css [ fontSize (px 80), width (px 250) ]
-                                        , Html.Styled.Attributes.value adjustmentRecord.inputValue
+                                        , Html.Styled.Attributes.value progressRecord.inputValue
                                         , Html.Styled.Attributes.id "input-adjust"
                                         , onInput AdjustmentEvent
                                         ]
@@ -425,7 +464,21 @@ view model =
                     , div []
                         (List.map (dogView minimodel.zone) minimodel.dogs)
                     , timePicker
+                    , testPointer
                     ]
+
+
+generatePointerElement element =
+    div
+        [ css
+            [ borderLeft3 (px 5) dashed (rgb 11 14 17)
+            , position absolute
+            , top (px (element.element.y + element.element.height))
+            , left (px element.element.x)
+            , height (px 200)
+            ]
+        ]
+        []
 
 
 largeFont =
@@ -448,7 +501,7 @@ viewTimeStamps : Time.Zone -> String -> List Occurence -> List (Html Msg)
 viewTimeStamps zone wasteAction wastes =
     let
         spanner waste stringy =
-            span [ css [ margin (px 8) ], onClick (ShowATimePicker waste) ]
+            span [ Html.Styled.Attributes.id "test", css [ margin (px 8) ], onClick (ShowATimePicker waste) ]
                 [ text stringy ]
 
         occurrenceToTimeStamp waste =

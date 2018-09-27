@@ -194,10 +194,10 @@ update msg bigmodel =
                     in
                         ( TimeZoneLoaded { model | timeAdjust = newTimeAdjust }, Task.attempt (\x -> Noop) (Dom.focus "input-adjust") )
 
-                AdjustmentEvent rawInput ->
+                AdjustmentEvent rawUserTotalInput ->
                     case model.timeAdjust of
-                        InProgress occurence inputValue ->
-                            case groomGoodInput inputValue rawInput of
+                        InProgress occurence existingInput ->
+                            case groomInput existingInput rawUserTotalInput of
                                 KeepEditing groomedInput ->
                                     ( TimeZoneLoaded
                                         { model
@@ -240,20 +240,22 @@ type ActionAfterInput
     | GoodAndDoneAdjustment String
 
 
-type MagicToDo
+type MagicToDoOnString
     = DoNothing
+    | DeleteChar
     | AddColon
     | IgnoreLastChar
     | DeemFinished
     | MoveColonCuzTenElevenTwelve
 
 
-groomGoodInput : String -> String -> ActionAfterInput
-groomGoodInput existingInput userAddedInput =
+groomInput : String -> String -> ActionAfterInput
+groomInput existingInput userAddedInput =
     let
         pipeline userAdded =
-            goodDigitInput userAdded
+            ignoreNonDigits userAdded
                 |> Maybe.map addAColonMaybe
+                |> Maybe.andThen restrictFiveDigits
     in
         case pipeline userAddedInput of
             Just updatedInput ->
@@ -261,6 +263,14 @@ groomGoodInput existingInput userAddedInput =
 
             Nothing ->
                 KeepEditing existingInput
+
+
+restrictFiveDigits : String -> Maybe String
+restrictFiveDigits stringy =
+    if String.length stringy <= 5 then
+        Just stringy
+    else
+        Nothing
 
 
 addAColonMaybe : String -> String
@@ -271,12 +281,8 @@ addAColonMaybe stringy =
         stringy
 
 
-
--- returns Just string if digit, nothing if not
-
-
-goodDigitInput : String -> Maybe String
-goodDigitInput raw =
+ignoreNonDigits : String -> Maybe String
+ignoreNonDigits raw =
     String.toList raw
         |> List.reverse
         |> Debug.log "omg!"

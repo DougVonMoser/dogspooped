@@ -5595,6 +5595,10 @@ var author$project$Main$adjustDogOccurence = F3(
 			},
 			oldDogs);
 	});
+var author$project$Main$KeepEditing = function (a) {
+	return {$: 'KeepEditing', a: a};
+};
+var elm$core$Debug$log = _Debug_log;
 var elm$core$List$head = function (list) {
 	if (list.b) {
 		var x = list.a;
@@ -5604,6 +5608,15 @@ var elm$core$List$head = function (list) {
 		return elm$core$Maybe$Nothing;
 	}
 };
+var elm$core$Maybe$andThen = F2(
+	function (callback, maybeValue) {
+		if (maybeValue.$ === 'Just') {
+			var value = maybeValue.a;
+			return callback(value);
+		} else {
+			return elm$core$Maybe$Nothing;
+		}
+	});
 var elm$core$Maybe$map = F2(
 	function (f, maybe) {
 		if (maybe.$ === 'Just') {
@@ -5614,30 +5627,39 @@ var elm$core$Maybe$map = F2(
 			return elm$core$Maybe$Nothing;
 		}
 	});
-var elm$core$Maybe$withDefault = F2(
-	function (_default, maybe) {
-		if (maybe.$ === 'Just') {
-			var value = maybe.a;
-			return value;
-		} else {
-			return _default;
-		}
-	});
 var elm$core$String$foldr = _String_foldr;
 var elm$core$String$toList = function (string) {
 	return A3(elm$core$String$foldr, elm$core$List$cons, _List_Nil, string);
 };
 var author$project$Main$goodDigitInput = function (raw) {
 	return A2(
-		elm$core$Maybe$withDefault,
-		false,
+		elm$core$Maybe$andThen,
+		function (x) {
+			return x ? elm$core$Maybe$Just(raw) : elm$core$Maybe$Nothing;
+		},
 		A2(
 			elm$core$Maybe$map,
 			elm$core$Char$isDigit,
 			elm$core$List$head(
-				elm$core$List$reverse(
-					elm$core$String$toList(raw)))));
+				A2(
+					elm$core$Debug$log,
+					'omg!',
+					elm$core$List$reverse(
+						elm$core$String$toList(raw))))));
 };
+var author$project$Main$groomGoodInput = F2(
+	function (existingInput, userAddedInput) {
+		var pipeline = function (userAdded) {
+			return author$project$Main$goodDigitInput(userAdded);
+		};
+		var _n0 = pipeline(userAddedInput);
+		if (_n0.$ === 'Just') {
+			var updatedInput = _n0.a;
+			return author$project$Main$KeepEditing(updatedInput);
+		} else {
+			return author$project$Main$KeepEditing(existingInput);
+		}
+	});
 var author$project$Main$initDogs = _List_fromArray(
 	[
 		{name: 'Oakley', pees: _List_Nil, poops: _List_Nil},
@@ -5719,15 +5741,6 @@ var elm$core$Array$get = F2(
 			elm$core$Array$tailIndex(len)) > -1) ? elm$core$Maybe$Just(
 			A2(elm$core$Elm$JsArray$unsafeGet, elm$core$Array$bitMask & index, tail)) : elm$core$Maybe$Just(
 			A3(elm$core$Array$getHelp, startShift, index, tree)));
-	});
-var elm$core$Maybe$andThen = F2(
-	function (callback, maybeValue) {
-		if (maybeValue.$ === 'Just') {
-			var value = maybeValue.a;
-			return callback(value);
-		} else {
-			return elm$core$Maybe$Nothing;
-		}
 	});
 var elm$core$String$toInt = _String_toInt;
 var elm$time$Time$Posix = function (a) {
@@ -6640,6 +6653,15 @@ var elm$core$Dict$isEmpty = function (dict) {
 		return false;
 	}
 };
+var elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return value;
+		} else {
+			return _default;
+		}
+	});
 var elm$browser$Debugger$Expando$viewExtraTiny = function (value) {
 	if (value.$ === 'Record') {
 		var record = value.b;
@@ -9968,22 +9990,24 @@ var author$project$Main$update = F2(
 							elm$browser$Browser$Dom$focus('input-adjust')));
 				case 'AdjustmentEvent':
 					var rawInput = msg.a;
-					var _n5 = _Utils_Tuple2(
-						author$project$Main$goodDigitInput(rawInput),
-						model.timeAdjust);
-					if (_n5.a && (_n5.b.$ === 'InProgress')) {
-						var _n6 = _n5.b;
-						var occurence = _n6.a;
-						var inputValue = _n6.b;
-						var updatedInput = (elm$core$String$length(rawInput) === 2) ? (rawInput + ':') : rawInput;
-						return _Utils_Tuple2(
-							author$project$Main$TimeZoneLoaded(
-								_Utils_update(
-									model,
-									{
-										timeAdjust: A2(author$project$Main$InProgress, occurence, updatedInput)
-									})),
-							elm$core$Platform$Cmd$none);
+					var _n5 = model.timeAdjust;
+					if (_n5.$ === 'InProgress') {
+						var occurence = _n5.a;
+						var inputValue = _n5.b;
+						var _n6 = A2(author$project$Main$groomGoodInput, inputValue, rawInput);
+						if (_n6.$ === 'KeepEditing') {
+							var groomedInput = _n6.a;
+							return _Utils_Tuple2(
+								author$project$Main$TimeZoneLoaded(
+									_Utils_update(
+										model,
+										{
+											timeAdjust: A2(author$project$Main$InProgress, occurence, groomedInput)
+										})),
+								elm$core$Platform$Cmd$none);
+						} else {
+							return _Utils_Tuple2(bigmodel, elm$core$Platform$Cmd$none);
+						}
 					} else {
 						return _Utils_Tuple2(bigmodel, elm$core$Platform$Cmd$none);
 					}

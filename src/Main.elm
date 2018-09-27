@@ -195,18 +195,22 @@ update msg bigmodel =
                         ( TimeZoneLoaded { model | timeAdjust = newTimeAdjust }, Task.attempt (\x -> Noop) (Dom.focus "input-adjust") )
 
                 AdjustmentEvent rawInput ->
-                    case ( goodDigitInput rawInput, model.timeAdjust ) of
-                        ( True, InProgress occurence inputValue ) ->
-                            let
-                                updatedInput =
-                                    if String.length rawInput == 2 then
-                                        rawInput ++ ":"
-                                    else
-                                        rawInput
-                            in
-                                ( TimeZoneLoaded { model | timeAdjust = InProgress occurence (updatedInput) }, Cmd.none )
+                    case model.timeAdjust of
+                        InProgress occurence inputValue ->
+                            case groomGoodInput inputValue rawInput of
+                                KeepEditing groomedInput ->
+                                    ( TimeZoneLoaded
+                                        { model
+                                            | timeAdjust = InProgress occurence groomedInput
+                                        }
+                                    , Cmd.none
+                                    )
 
-                        ( _, _ ) ->
+                                -- implement escape, goodAndDoneAdjustment
+                                _ ->
+                                    ( bigmodel, Cmd.none )
+
+                        _ ->
                             ( bigmodel, Cmd.none )
 
                 CloseAndUpdateTime ->
@@ -230,13 +234,52 @@ update msg bigmodel =
                     ( bigmodel, Cmd.none )
 
 
-goodDigitInput : String -> Bool
+type ActionAfterInput
+    = KeepEditing String
+    | Escape
+    | GoodAndDoneAdjustment String
+
+
+type MagicToDo
+    = DoNothing
+    | AddColon
+    | IgnoreLastChar
+    | DeemFinished
+    | MoveColonCuzTenElevenTwelve
+
+
+groomGoodInput : String -> String -> ActionAfterInput
+groomGoodInput existingInput userAddedInput =
+    let
+        pipeline userAdded =
+            goodDigitInput userAdded
+    in
+        case pipeline userAddedInput of
+            Just updatedInput ->
+                KeepEditing updatedInput
+
+            Nothing ->
+                KeepEditing existingInput
+
+
+
+-- returns Just string if digit, nothing if not
+
+
+goodDigitInput : String -> Maybe String
 goodDigitInput raw =
     String.toList raw
         |> List.reverse
+        |> Debug.log "omg!"
         |> List.head
         |> Maybe.map Char.isDigit
-        |> Maybe.withDefault False
+        |> Maybe.andThen
+            (\x ->
+                if x == True then
+                    Just raw
+                else
+                    Nothing
+            )
 
 
 adjustDogOccurence : Occurence -> List Dog -> Posix -> List Dog

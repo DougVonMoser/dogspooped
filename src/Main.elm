@@ -36,7 +36,11 @@ type alias Dog =
 
 type TimeAdjust
     = NotInProgress
-    | InProgress Occurence String
+    | InProgress { occurence : Occurence, inputValue : String, pointer : Pointer }
+
+
+type Pointer
+    = FindingPositionThingies
 
 
 type alias MiniModel =
@@ -164,10 +168,7 @@ update msg bigmodel =
                                 HaveNot ->
                                     Half
 
-                                Half ->
-                                    Eated
-
-                                Eated ->
+                                _ ->
                                     Eated
                     in
                         ( TimeZoneLoaded { model | breakfast = newStatus }, Cmd.none )
@@ -179,10 +180,7 @@ update msg bigmodel =
                                 HaveNot ->
                                     Half
 
-                                Half ->
-                                    Eated
-
-                                Eated ->
+                                _ ->
                                     Eated
                     in
                         ( TimeZoneLoaded { model | dinner = newStatus }, Cmd.none )
@@ -190,18 +188,31 @@ update msg bigmodel =
                 ShowATimePicker occurence ->
                     let
                         newTimeAdjust =
-                            InProgress occurence ""
+                            InProgress
+                                { occurence = occurence
+                                , inputValue = ""
+                                , pointer = FindingPositionThingies
+                                }
                     in
-                        ( TimeZoneLoaded { model | timeAdjust = newTimeAdjust }, Task.attempt (\x -> Noop) (Dom.focus "input-adjust") )
+                        ( TimeZoneLoaded { model | timeAdjust = newTimeAdjust }
+                        , Cmd.batch
+                            [ Task.attempt (\x -> Noop) (Dom.focus "input-adjust")
+                            ]
+                        )
 
                 AdjustmentEvent rawUserTotalInput ->
                     case model.timeAdjust of
-                        InProgress occurence existingInput ->
-                            case groomInput existingInput rawUserTotalInput of
+                        InProgress progressRecord ->
+                            case groomInput progressRecord.inputValue rawUserTotalInput of
                                 KeepEditing groomedInput ->
                                     ( TimeZoneLoaded
                                         { model
-                                            | timeAdjust = InProgress occurence groomedInput
+                                            | timeAdjust =
+                                                InProgress
+                                                    { occurence = progressRecord.occurence
+                                                    , inputValue = groomedInput
+                                                    , pointer = FindingPositionThingies
+                                                    }
                                         }
                                     , Cmd.none
                                     )
@@ -215,12 +226,12 @@ update msg bigmodel =
 
                 CloseAndUpdateTime ->
                     case model.timeAdjust of
-                        InProgress occurence inputValue ->
-                            case parseInputToPosix inputValue model.zone of
+                        InProgress progressRecord ->
+                            case parseInputToPosix progressRecord.inputValue model.zone of
                                 Just updatedPosix ->
                                     let
                                         newDogs =
-                                            adjustDogOccurence occurence model.dogs updatedPosix
+                                            adjustDogOccurence progressRecord.occurence model.dogs updatedPosix
                                     in
                                         ( TimeZoneLoaded { model | timeAdjust = NotInProgress, dogs = newDogs }, Cmd.none )
 
@@ -383,14 +394,14 @@ view model =
                         NotInProgress ->
                             text ""
 
-                        InProgress occurenceToAdjust inputValue ->
+                        InProgress adjustmentRecord ->
                             div
                                 [ css (inputContainerStyle ++ [ zIndex (int 1) ])
                                 ]
                                 [ div [ css [ zIndex (int 4) ] ]
                                     [ input
                                         [ css [ fontSize (px 80), width (px 250) ]
-                                        , Html.Styled.Attributes.value inputValue
+                                        , Html.Styled.Attributes.value adjustmentRecord.inputValue
                                         , Html.Styled.Attributes.id "input-adjust"
                                         , onInput AdjustmentEvent
                                         ]

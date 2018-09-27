@@ -5549,12 +5549,12 @@ var author$project$Main$init = function (flags) {
 		A2(elm$core$Task$perform, author$project$Main$GotTimeZone, elm$time$Time$here));
 };
 var author$project$Main$Eated = {$: 'Eated'};
+var author$project$Main$FindingPositionThingies = {$: 'FindingPositionThingies'};
 var author$project$Main$Half = {$: 'Half'};
 var author$project$Main$HaveNot = {$: 'HaveNot'};
-var author$project$Main$InProgress = F2(
-	function (a, b) {
-		return {$: 'InProgress', a: a, b: b};
-	});
+var author$project$Main$InProgress = function (a) {
+	return {$: 'InProgress', a: a};
+};
 var author$project$Main$Noop = {$: 'Noop'};
 var author$project$Main$NotInProgress = {$: 'NotInProgress'};
 var author$project$Main$PeeTime = F2(
@@ -9953,13 +9953,10 @@ var author$project$Main$update = F2(
 				case 'JustBreakfasted':
 					var newStatus = function () {
 						var _n3 = model.breakfast;
-						switch (_n3.$) {
-							case 'HaveNot':
-								return author$project$Main$Half;
-							case 'Half':
-								return author$project$Main$Eated;
-							default:
-								return author$project$Main$Eated;
+						if (_n3.$ === 'HaveNot') {
+							return author$project$Main$Half;
+						} else {
+							return author$project$Main$Eated;
 						}
 					}();
 					return _Utils_Tuple2(
@@ -9971,13 +9968,10 @@ var author$project$Main$update = F2(
 				case 'JustDinnered':
 					var newStatus = function () {
 						var _n4 = model.dinner;
-						switch (_n4.$) {
-							case 'HaveNot':
-								return author$project$Main$Half;
-							case 'Half':
-								return author$project$Main$Eated;
-							default:
-								return author$project$Main$Eated;
+						if (_n4.$ === 'HaveNot') {
+							return author$project$Main$Half;
+						} else {
+							return author$project$Main$Eated;
 						}
 					}();
 					return _Utils_Tuple2(
@@ -9988,25 +9982,29 @@ var author$project$Main$update = F2(
 						elm$core$Platform$Cmd$none);
 				case 'ShowATimePicker':
 					var occurence = msg.a;
-					var newTimeAdjust = A2(author$project$Main$InProgress, occurence, '');
+					var newTimeAdjust = author$project$Main$InProgress(
+						{inputValue: '', occurence: occurence, pointer: author$project$Main$FindingPositionThingies});
 					return _Utils_Tuple2(
 						author$project$Main$TimeZoneLoaded(
 							_Utils_update(
 								model,
 								{timeAdjust: newTimeAdjust})),
-						A2(
-							elm$core$Task$attempt,
-							function (x) {
-								return author$project$Main$Noop;
-							},
-							elm$browser$Browser$Dom$focus('input-adjust')));
+						elm$core$Platform$Cmd$batch(
+							_List_fromArray(
+								[
+									A2(
+									elm$core$Task$attempt,
+									function (x) {
+										return author$project$Main$Noop;
+									},
+									elm$browser$Browser$Dom$focus('input-adjust'))
+								])));
 				case 'AdjustmentEvent':
 					var rawUserTotalInput = msg.a;
 					var _n5 = model.timeAdjust;
 					if (_n5.$ === 'InProgress') {
-						var occurence = _n5.a;
-						var existingInput = _n5.b;
-						var _n6 = A2(author$project$Main$groomInput, existingInput, rawUserTotalInput);
+						var progressRecord = _n5.a;
+						var _n6 = A2(author$project$Main$groomInput, progressRecord.inputValue, rawUserTotalInput);
 						if (_n6.$ === 'KeepEditing') {
 							var groomedInput = _n6.a;
 							return _Utils_Tuple2(
@@ -10014,7 +10012,8 @@ var author$project$Main$update = F2(
 									_Utils_update(
 										model,
 										{
-											timeAdjust: A2(author$project$Main$InProgress, occurence, groomedInput)
+											timeAdjust: author$project$Main$InProgress(
+												{inputValue: groomedInput, occurence: progressRecord.occurence, pointer: author$project$Main$FindingPositionThingies})
 										})),
 								elm$core$Platform$Cmd$none);
 						} else {
@@ -10026,12 +10025,11 @@ var author$project$Main$update = F2(
 				case 'CloseAndUpdateTime':
 					var _n7 = model.timeAdjust;
 					if (_n7.$ === 'InProgress') {
-						var occurence = _n7.a;
-						var inputValue = _n7.b;
-						var _n8 = A2(author$project$Main$parseInputToPosix, inputValue, model.zone);
+						var progressRecord = _n7.a;
+						var _n8 = A2(author$project$Main$parseInputToPosix, progressRecord.inputValue, model.zone);
 						if (_n8.$ === 'Just') {
 							var updatedPosix = _n8.a;
-							var newDogs = A3(author$project$Main$adjustDogOccurence, occurence, model.dogs, updatedPosix);
+							var newDogs = A3(author$project$Main$adjustDogOccurence, progressRecord.occurence, model.dogs, updatedPosix);
 							return _Utils_Tuple2(
 								author$project$Main$TimeZoneLoaded(
 									_Utils_update(
@@ -12892,8 +12890,7 @@ var author$project$Main$view = function (model) {
 			if (_n1.$ === 'NotInProgress') {
 				return rtfeldman$elm_css$Html$Styled$text('');
 			} else {
-				var occurenceToAdjust = _n1.a;
-				var inputValue = _n1.b;
+				var adjustmentRecord = _n1.a;
 				return A2(
 					rtfeldman$elm_css$Html$Styled$div,
 					_List_fromArray(
@@ -12934,7 +12931,7 @@ var author$project$Main$view = function (model) {
 													rtfeldman$elm_css$Css$width(
 													rtfeldman$elm_css$Css$px(250))
 												])),
-											rtfeldman$elm_css$Html$Styled$Attributes$value(inputValue),
+											rtfeldman$elm_css$Html$Styled$Attributes$value(adjustmentRecord.inputValue),
 											rtfeldman$elm_css$Html$Styled$Attributes$id('input-adjust'),
 											rtfeldman$elm_css$Html$Styled$Events$onInput(author$project$Main$AdjustmentEvent)
 										]),

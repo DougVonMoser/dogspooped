@@ -440,7 +440,7 @@ view model =
                 testPointer =
                     case minimodel.timeAdjust of
                         NotInProgress ->
-                            text ""
+                            [ text "" ]
 
                         InProgress progressRecord ->
                             case ( progressRecord.pointer, progressRecord.pointed ) of
@@ -448,7 +448,7 @@ view model =
                                     generatePointerElement occurenceSourceEl targetWord
 
                                 ( _, _ ) ->
-                                    text ""
+                                    [ text "" ]
 
                 timePicker =
                     case minimodel.timeAdjust of
@@ -478,16 +478,18 @@ view model =
                                 ]
             in
                 div [ css [ width (vw 100), height (vh 100), overflow hidden ] ]
-                    [ div []
-                        [ viewAllergy minimodel
-                        , viewMeal JustBreakfasted minimodel.breakfast "🍳"
-                        , viewMeal JustDinnered minimodel.dinner "🍔"
+                    (List.append
+                        [ div []
+                            [ viewAllergy minimodel
+                            , viewMeal JustBreakfasted minimodel.breakfast "🍳"
+                            , viewMeal JustDinnered minimodel.dinner "🍔"
+                            ]
+                        , div []
+                            (List.map (dogView minimodel.zone) minimodel.dogs)
+                        , timePicker
                         ]
-                    , div []
-                        (List.map (dogView minimodel.zone) minimodel.dogs)
-                    , timePicker
-                    , testPointer
-                    ]
+                        testPointer
+                    )
 
 
 findTanDegrees : Float -> Float -> Float
@@ -536,22 +538,26 @@ generateLineFromPoints ( ( x1, y1 ), ( x2, y2 ) ) =
             []
 
 
-generatePointerElement : Dom.Element -> Dom.Element -> Html Msg
+generatePointerElement : Dom.Element -> Dom.Element -> List (Html Msg)
 generatePointerElement pointer pointed =
     let
-        x1 =
-            pointer.element.x
+        line1 =
+            let
+                x1 =
+                    pointer.element.x
 
-        x2 =
-            pointed.element.x
+                x2 =
+                    pointed.element.x
 
-        y1 =
-            pointer.element.y + pointer.element.height
+                y1 =
+                    pointer.element.y + pointer.element.height
 
-        y2 =
-            pointed.element.y + pointed.element.height
+                y2 =
+                    pointed.element.y + pointed.element.height
+            in
+                generateLineFromPoints ( ( x1, y1 ), ( x2, y2 ) )
     in
-        generateLineFromPoints ( ( x1, y1 ), ( x2, y2 ) )
+        [ line1 ]
 
 
 largeFont =

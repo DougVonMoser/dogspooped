@@ -12830,14 +12830,18 @@ var author$project$Main$generateLineFromPoints = function (_n0) {
 };
 var author$project$Main$generatePointerElement = F2(
 	function (pointer, pointed) {
-		var y2 = pointed.element.y + pointed.element.height;
-		var y1 = pointer.element.y + pointer.element.height;
-		var x2 = pointed.element.x;
-		var x1 = pointer.element.x;
-		return author$project$Main$generateLineFromPoints(
-			_Utils_Tuple2(
-				_Utils_Tuple2(x1, y1),
-				_Utils_Tuple2(x2, y2)));
+		var line1 = function () {
+			var y2 = pointed.element.y + pointed.element.height;
+			var y1 = pointer.element.y + pointer.element.height;
+			var x2 = pointed.element.x;
+			var x1 = pointer.element.x;
+			return author$project$Main$generateLineFromPoints(
+				_Utils_Tuple2(
+					_Utils_Tuple2(x1, y1),
+					_Utils_Tuple2(x2, y2)));
+		}();
+		return _List_fromArray(
+			[line1]);
 	});
 var rtfeldman$elm_css$Css$Internal$property = F2(
 	function (key, value) {
@@ -13135,7 +13139,10 @@ var author$project$Main$view = function (model) {
 		var testPointer = function () {
 			var _n1 = minimodel.timeAdjust;
 			if (_n1.$ === 'NotInProgress') {
-				return rtfeldman$elm_css$Html$Styled$text('');
+				return _List_fromArray(
+					[
+						rtfeldman$elm_css$Html$Styled$text('')
+					]);
 			} else {
 				var progressRecord = _n1.a;
 				var _n2 = _Utils_Tuple2(progressRecord.pointer, progressRecord.pointed);
@@ -13144,7 +13151,10 @@ var author$project$Main$view = function (model) {
 					var targetWord = _n2.b.a;
 					return A2(author$project$Main$generatePointerElement, occurenceSourceEl, targetWord);
 				} else {
-					return rtfeldman$elm_css$Html$Styled$text('');
+					return _List_fromArray(
+						[
+							rtfeldman$elm_css$Html$Styled$text('')
+						]);
 				}
 			}
 		}();
@@ -13162,27 +13172,29 @@ var author$project$Main$view = function (model) {
 							rtfeldman$elm_css$Css$overflow(rtfeldman$elm_css$Css$hidden)
 						]))
 				]),
-			_List_fromArray(
-				[
-					A2(
-					rtfeldman$elm_css$Html$Styled$div,
-					_List_Nil,
-					_List_fromArray(
-						[
-							author$project$Main$viewAllergy(minimodel),
-							A3(author$project$Main$viewMeal, author$project$Main$JustBreakfasted, minimodel.breakfast, '🍳'),
-							A3(author$project$Main$viewMeal, author$project$Main$JustDinnered, minimodel.dinner, '🍔')
-						])),
-					A2(
-					rtfeldman$elm_css$Html$Styled$div,
-					_List_Nil,
-					A2(
-						elm$core$List$map,
-						author$project$Main$dogView(minimodel.zone),
-						minimodel.dogs)),
-					timePicker,
-					testPointer
-				]));
+			A2(
+				elm$core$List$append,
+				_List_fromArray(
+					[
+						A2(
+						rtfeldman$elm_css$Html$Styled$div,
+						_List_Nil,
+						_List_fromArray(
+							[
+								author$project$Main$viewAllergy(minimodel),
+								A3(author$project$Main$viewMeal, author$project$Main$JustBreakfasted, minimodel.breakfast, '🍳'),
+								A3(author$project$Main$viewMeal, author$project$Main$JustDinnered, minimodel.dinner, '🍔')
+							])),
+						A2(
+						rtfeldman$elm_css$Html$Styled$div,
+						_List_Nil,
+						A2(
+							elm$core$List$map,
+							author$project$Main$dogView(minimodel.zone),
+							minimodel.dogs)),
+						timePicker
+					]),
+				testPointer));
 	}
 };
 var elm$browser$Browser$element = _Browser_element;

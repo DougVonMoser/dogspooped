@@ -182,3 +182,9 @@ body {
     background: #f7f7f7;
     font-weight: 700;
 }
+
+
+.point {
+    transform-origin: top left;
+}
+

@@ -36,7 +36,12 @@ type alias Dog =
 
 type TimeAdjust
     = NotInProgress
-    | InProgress { occurence : Occurence, inputValue : String, pointer : Pointer }
+    | InProgress
+        { occurence : Occurence
+        , inputValue : String
+        , pointer : Pointer
+        , pointed : Pointer
+        }
 
 
 type Pointer
@@ -195,12 +200,14 @@ update msg bigmodel =
                                 { occurence = occurence
                                 , inputValue = ""
                                 , pointer = FindingPositionThingies
+                                , pointed = FindingPositionThingies
                                 }
                     in
                         ( TimeZoneLoaded { model | timeAdjust = newTimeAdjust }
                         , Cmd.batch
                             [ Task.attempt (\x -> Noop) (Dom.focus "input-adjust")
                             , Task.attempt (FoundOccurenceEl) (Dom.getElement "test")
+                            , Task.attempt (FoundTimeAdjustEl) (Dom.getElement "input-adjust")
                             ]
                         )
 
@@ -213,10 +220,7 @@ update msg bigmodel =
                                         { model
                                             | timeAdjust =
                                                 InProgress
-                                                    { occurence = progressRecord.occurence
-                                                    , inputValue = groomedInput
-                                                    , pointer = FindingPositionThingies
-                                                    }
+                                                    { progressRecord | inputValue = groomedInput }
                                         }
                                     , Cmd.none
                                     )
@@ -237,10 +241,7 @@ update msg bigmodel =
                                         { model
                                             | timeAdjust =
                                                 InProgress
-                                                    { occurence = progressRecord.occurence
-                                                    , inputValue = progressRecord.inputValue
-                                                    , pointer = GotOriginElement element
-                                                    }
+                                                    { progressRecord | pointer = GotOriginElement element }
                                         }
                                     , Cmd.none
                                     )
@@ -251,28 +252,26 @@ update msg bigmodel =
                         _ ->
                             ( bigmodel, Cmd.none )
 
-                --                FoundTimeAdjustEl elementFindResult ->
-                --                    case elementFindResult of
-                --                        Ok element ->
-                --                            case model.timeAdjust of
-                --                                InProgress progressRecord ->
-                --                                    ( TimeZoneLoaded
-                --                                        { model
-                --                                            | timeAdjust =
-                --                                                InProgress
-                --                                                    { occurence = progressRecord.occurence
-                --                                                    , inputValue = progressRecord.inputValue
-                --                                                    , pointer = GotOriginElement element
-                --                                                    }
-                --                                        }
-                --                                    , Cmd.none
-                --                                    )
-                --
-                --                                _ ->
-                --                                    ( bigmodel, Cmd.none )
-                --
-                --                        _ ->
-                --                            ( bigmodel, Cmd.none )
+                FoundTimeAdjustEl elementFindResult ->
+                    case elementFindResult of
+                        Ok element ->
+                            case model.timeAdjust of
+                                InProgress progressRecord ->
+                                    ( TimeZoneLoaded
+                                        { model
+                                            | timeAdjust =
+                                                InProgress
+                                                    { progressRecord | pointed = GotOriginElement element }
+                                        }
+                                    , Cmd.none
+                                    )
+
+                                _ ->
+                                    ( bigmodel, Cmd.none )
+
+                        _ ->
+                            ( bigmodel, Cmd.none )
+
                 CloseAndUpdateTime ->
                     case model.timeAdjust of
                         InProgress progressRecord ->
@@ -444,11 +443,11 @@ view model =
                             text ""
 
                         InProgress progressRecord ->
-                            case progressRecord.pointer of
-                                GotOriginElement occurenceSourceEl ->
-                                    generatePointerElement occurenceSourceEl
+                            case ( progressRecord.pointer, progressRecord.pointed ) of
+                                ( GotOriginElement occurenceSourceEl, GotOriginElement targetWord ) ->
+                                    generatePointerElement occurenceSourceEl targetWord
 
-                                _ ->
+                                ( _, _ ) ->
                                     text ""
 
                 timePicker =
@@ -491,17 +490,42 @@ view model =
                     ]
 
 
-generatePointerElement element =
-    div
-        [ css
-            [ borderLeft3 (px 5) dashed (rgb 11 14 17)
-            , position absolute
-            , top (px (element.element.y + element.element.height))
-            , left (px element.element.x)
-            , height (px 200)
+generatePointerElement : Dom.Element -> Dom.Element -> Html Msg
+generatePointerElement pointer pointed =
+    let
+        pointerBottom =
+            pointer.element.y + pointer.element.height
+
+        pointedBottom =
+            pointed.element.y + pointed.element.height
+
+        adjacent =
+            pointedBottom - pointerBottom
+
+        oppositte =
+            pointed.element.x - pointer.element.x
+
+        hypotenuse =
+            sqrt ((adjacent ^ 2) + (oppositte ^ 2))
+
+        radians =
+            atan (oppositte / adjacent)
+
+        degrees =
+            (radians * 180) / pi
+    in
+        div
+            [ class "point"
+            , css
+                [ borderLeft3 (px 5) dashed (rgb 11 14 17)
+                , position absolute
+                , top (px pointerBottom)
+                , left (px pointer.element.x)
+                , height (px hypotenuse)
+                , transform (rotate (deg -degrees))
+                ]
             ]
-        ]
-        []
+            []
 
 
 largeFont =

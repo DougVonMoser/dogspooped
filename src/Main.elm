@@ -490,42 +490,68 @@ view model =
                     ]
 
 
-generatePointerElement : Dom.Element -> Dom.Element -> Html Msg
-generatePointerElement pointer pointed =
+findTanDegrees : Float -> Float -> Float
+findTanDegrees opp adj =
     let
-        pointerBottom =
-            pointer.element.y + pointer.element.height
+        radians =
+            atan (opp / adj)
+    in
+        (radians * 180) / pi
 
-        pointedBottom =
-            pointed.element.y + pointed.element.height
 
+
+-- (x1,y1) -> (y2,y2)-> Html.Msg
+
+
+type alias Points =
+    ( ( Float, Float ), ( Float, Float ) )
+
+
+generateLineFromPoints : Points -> Html Msg
+generateLineFromPoints ( ( x1, y1 ), ( x2, y2 ) ) =
+    let
         adjacent =
-            pointedBottom - pointerBottom
+            y2 - y1
 
         oppositte =
-            pointed.element.x - pointer.element.x
+            x2 - x1
 
         hypotenuse =
             sqrt ((adjacent ^ 2) + (oppositte ^ 2))
 
-        radians =
-            atan (oppositte / adjacent)
-
         degrees =
-            (radians * 180) / pi
+            findTanDegrees oppositte adjacent
     in
         div
             [ class "point"
             , css
                 [ borderLeft3 (px 5) dashed (rgb 11 14 17)
                 , position absolute
-                , top (px pointerBottom)
-                , left (px pointer.element.x)
+                , top (px y1)
+                , left (px x1)
                 , height (px hypotenuse)
                 , transform (rotate (deg -degrees))
                 ]
             ]
             []
+
+
+generatePointerElement : Dom.Element -> Dom.Element -> Html Msg
+generatePointerElement pointer pointed =
+    let
+        x1 =
+            pointer.element.x
+
+        x2 =
+            pointed.element.x
+
+        y1 =
+            pointer.element.y + pointer.element.height
+
+        y2 =
+            pointed.element.y + pointed.element.height
+    in
+        generateLineFromPoints ( ( x1, y1 ), ( x2, y2 ) )
 
 
 largeFont =
@@ -616,8 +642,7 @@ viewMeal msg mealStatus icon =
 
 inputContainerStyle =
     [ position absolute
-    , backgroundColor (rgb 6 6 6)
-    , opacity (Css.num 0.5)
+    , backgroundColor (rgba 6 6 6 0.5)
     , top zero
     , left zero
     , width (pct 100)

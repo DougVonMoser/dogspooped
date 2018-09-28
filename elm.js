@@ -12698,6 +12698,11 @@ var author$project$Main$dogView = F2(
 	});
 var elm$core$Basics$atan = _Basics_atan;
 var elm$core$Basics$pi = _Basics_pi;
+var author$project$Main$findTanDegrees = F2(
+	function (opp, adj) {
+		var radians = elm$core$Basics$atan(opp / adj);
+		return (radians * 180) / elm$core$Basics$pi;
+	});
 var elm$core$Basics$pow = _Basics_pow;
 var elm$core$Basics$sqrt = _Basics_sqrt;
 var rtfeldman$elm_css$Css$absolute = {position: rtfeldman$elm_css$Css$Structure$Compatible, value: 'absolute'};
@@ -12784,42 +12789,55 @@ var rtfeldman$elm_css$Css$transform = function (only) {
 		_List_fromArray(
 			[only]));
 };
+var author$project$Main$generateLineFromPoints = function (_n0) {
+	var _n1 = _n0.a;
+	var x1 = _n1.a;
+	var y1 = _n1.b;
+	var _n2 = _n0.b;
+	var x2 = _n2.a;
+	var y2 = _n2.b;
+	var oppositte = x2 - x1;
+	var adjacent = y2 - y1;
+	var degrees = A2(author$project$Main$findTanDegrees, oppositte, adjacent);
+	var hypotenuse = elm$core$Basics$sqrt(
+		A2(elm$core$Basics$pow, adjacent, 2) + A2(elm$core$Basics$pow, oppositte, 2));
+	return A2(
+		rtfeldman$elm_css$Html$Styled$div,
+		_List_fromArray(
+			[
+				rtfeldman$elm_css$Html$Styled$Attributes$class('point'),
+				rtfeldman$elm_css$Html$Styled$Attributes$css(
+				_List_fromArray(
+					[
+						A3(
+						rtfeldman$elm_css$Css$borderLeft3,
+						rtfeldman$elm_css$Css$px(5),
+						rtfeldman$elm_css$Css$dashed,
+						A3(rtfeldman$elm_css$Css$rgb, 11, 14, 17)),
+						rtfeldman$elm_css$Css$position(rtfeldman$elm_css$Css$absolute),
+						rtfeldman$elm_css$Css$top(
+						rtfeldman$elm_css$Css$px(y1)),
+						rtfeldman$elm_css$Css$left(
+						rtfeldman$elm_css$Css$px(x1)),
+						rtfeldman$elm_css$Css$height(
+						rtfeldman$elm_css$Css$px(hypotenuse)),
+						rtfeldman$elm_css$Css$transform(
+						rtfeldman$elm_css$Css$rotate(
+							rtfeldman$elm_css$Css$deg(-degrees)))
+					]))
+			]),
+		_List_Nil);
+};
 var author$project$Main$generatePointerElement = F2(
 	function (pointer, pointed) {
-		var pointerBottom = pointer.element.y + pointer.element.height;
-		var pointedBottom = pointed.element.y + pointed.element.height;
-		var oppositte = pointed.element.x - pointer.element.x;
-		var adjacent = pointedBottom - pointerBottom;
-		var hypotenuse = elm$core$Basics$sqrt(
-			A2(elm$core$Basics$pow, adjacent, 2) + A2(elm$core$Basics$pow, oppositte, 2));
-		var radians = elm$core$Basics$atan(oppositte / adjacent);
-		var degrees = (radians * 180) / elm$core$Basics$pi;
-		return A2(
-			rtfeldman$elm_css$Html$Styled$div,
-			_List_fromArray(
-				[
-					rtfeldman$elm_css$Html$Styled$Attributes$class('point'),
-					rtfeldman$elm_css$Html$Styled$Attributes$css(
-					_List_fromArray(
-						[
-							A3(
-							rtfeldman$elm_css$Css$borderLeft3,
-							rtfeldman$elm_css$Css$px(5),
-							rtfeldman$elm_css$Css$dashed,
-							A3(rtfeldman$elm_css$Css$rgb, 11, 14, 17)),
-							rtfeldman$elm_css$Css$position(rtfeldman$elm_css$Css$absolute),
-							rtfeldman$elm_css$Css$top(
-							rtfeldman$elm_css$Css$px(pointerBottom)),
-							rtfeldman$elm_css$Css$left(
-							rtfeldman$elm_css$Css$px(pointer.element.x)),
-							rtfeldman$elm_css$Css$height(
-							rtfeldman$elm_css$Css$px(hypotenuse)),
-							rtfeldman$elm_css$Css$transform(
-							rtfeldman$elm_css$Css$rotate(
-								rtfeldman$elm_css$Css$deg(-degrees)))
-						]))
-				]),
-			_List_Nil);
+		var y2 = pointed.element.y + pointed.element.height;
+		var y1 = pointer.element.y + pointer.element.height;
+		var x2 = pointed.element.x;
+		var x1 = pointer.element.x;
+		return author$project$Main$generateLineFromPoints(
+			_Utils_Tuple2(
+				_Utils_Tuple2(x1, y1),
+				_Utils_Tuple2(x2, y2)));
 	});
 var rtfeldman$elm_css$Css$Internal$property = F2(
 	function (key, value) {
@@ -12906,30 +12924,38 @@ var rtfeldman$elm_css$Css$justifyContent = function (fn) {
 		'justify-content',
 		fn(rtfeldman$elm_css$Css$Internal$lengthForOverloadedProperty));
 };
-var rtfeldman$elm_css$Css$UnitlessFloat = {$: 'UnitlessFloat'};
-var rtfeldman$elm_css$Css$num = function (val) {
-	return {
-		lengthOrNumber: rtfeldman$elm_css$Css$Structure$Compatible,
-		lengthOrNumberOrAutoOrNoneOrContent: rtfeldman$elm_css$Css$Structure$Compatible,
-		number: rtfeldman$elm_css$Css$Structure$Compatible,
-		numericValue: val,
-		unitLabel: '',
-		units: rtfeldman$elm_css$Css$UnitlessFloat,
-		value: elm$core$String$fromFloat(val)
-	};
-};
-var rtfeldman$elm_css$Css$opacity = rtfeldman$elm_css$Css$prop1('opacity');
 var rtfeldman$elm_css$Css$PercentageUnits = {$: 'PercentageUnits'};
 var rtfeldman$elm_css$Css$pct = A2(rtfeldman$elm_css$Css$Internal$lengthConverter, rtfeldman$elm_css$Css$PercentageUnits, '%');
+var rtfeldman$elm_css$Css$rgba = F4(
+	function (r, g, b, alpha) {
+		return {
+			alpha: alpha,
+			blue: b,
+			color: rtfeldman$elm_css$Css$Structure$Compatible,
+			green: g,
+			red: r,
+			value: A2(
+				rtfeldman$elm_css$Css$cssFunction,
+				'rgba',
+				_Utils_ap(
+					A2(
+						elm$core$List$map,
+						elm$core$String$fromInt,
+						_List_fromArray(
+							[r, g, b])),
+					_List_fromArray(
+						[
+							elm$core$String$fromFloat(alpha)
+						])))
+		};
+	});
 var rtfeldman$elm_css$Css$solid = {borderStyle: rtfeldman$elm_css$Css$Structure$Compatible, textDecorationStyle: rtfeldman$elm_css$Css$Structure$Compatible, value: 'solid'};
 var rtfeldman$elm_css$Css$width = rtfeldman$elm_css$Css$prop1('width');
 var author$project$Main$inputContainerStyle = _List_fromArray(
 	[
 		rtfeldman$elm_css$Css$position(rtfeldman$elm_css$Css$absolute),
 		rtfeldman$elm_css$Css$backgroundColor(
-		A3(rtfeldman$elm_css$Css$rgb, 6, 6, 6)),
-		rtfeldman$elm_css$Css$opacity(
-		rtfeldman$elm_css$Css$num(0.5)),
+		A4(rtfeldman$elm_css$Css$rgba, 6, 6, 6, 0.5)),
 		rtfeldman$elm_css$Css$top(rtfeldman$elm_css$Css$zero),
 		rtfeldman$elm_css$Css$left(rtfeldman$elm_css$Css$zero),
 		rtfeldman$elm_css$Css$width(

@@ -12698,11 +12698,15 @@ var author$project$Main$dogView = F2(
 	});
 var elm$core$Basics$atan = _Basics_atan;
 var elm$core$Basics$pi = _Basics_pi;
-var author$project$Main$findTanDegrees = F2(
-	function (opp, adj) {
-		var radians = elm$core$Basics$atan(opp / adj);
+var author$project$Main$findTanDegrees = function (a) {
+	var radiansToDegrees = function (radians) {
 		return (radians * 180) / elm$core$Basics$pi;
-	});
+	};
+	return A2(
+		elm$core$Basics$composeR,
+		elm$core$Basics$fdiv(a),
+		A2(elm$core$Basics$composeR, elm$core$Basics$atan, radiansToDegrees));
+};
 var elm$core$Basics$pow = _Basics_pow;
 var elm$core$Basics$sqrt = _Basics_sqrt;
 var rtfeldman$elm_css$Css$absolute = {position: rtfeldman$elm_css$Css$Structure$Compatible, value: 'absolute'};
@@ -12829,49 +12833,30 @@ var author$project$Main$generateLineFromPoints = function (_n0) {
 		_List_Nil);
 };
 var author$project$Main$generatePointerElement = F2(
-	function (pointer, pointed) {
-		var line4 = function () {
-			var y2 = pointed.element.y;
-			var y1 = pointer.element.y;
-			var x2 = pointed.element.x + pointer.element.width;
-			var x1 = pointer.element.x + pointer.element.width;
-			return author$project$Main$generateLineFromPoints(
-				_Utils_Tuple2(
-					_Utils_Tuple2(x1, y1),
-					_Utils_Tuple2(x2, y2)));
-		}();
-		var line3 = function () {
-			var y2 = pointed.element.y + pointed.element.height;
-			var y1 = pointer.element.y + pointer.element.height;
-			var x2 = pointed.element.x + pointed.element.width;
-			var x1 = pointer.element.x + pointer.element.width;
-			return author$project$Main$generateLineFromPoints(
-				_Utils_Tuple2(
-					_Utils_Tuple2(x1, y1),
-					_Utils_Tuple2(x2, y2)));
-		}();
-		var line2 = function () {
-			var y2 = pointed.element.y;
-			var y1 = pointer.element.y;
-			var x2 = pointed.element.x;
-			var x1 = pointer.element.x;
-			return author$project$Main$generateLineFromPoints(
-				_Utils_Tuple2(
-					_Utils_Tuple2(x1, y1),
-					_Utils_Tuple2(x2, y2)));
-		}();
-		var line1 = function () {
-			var y2 = pointed.element.y + pointed.element.height;
-			var y1 = pointer.element.y + pointer.element.height;
-			var x2 = pointed.element.x;
-			var x1 = pointer.element.x;
-			return author$project$Main$generateLineFromPoints(
-				_Utils_Tuple2(
-					_Utils_Tuple2(x1, y1),
-					_Utils_Tuple2(x2, y2)));
-		}();
-		return _List_fromArray(
-			[line1, line2, line3, line4]);
+	function (xEl, pointedEl) {
+		var y = function ($) {
+			return $.element;
+		}(pointedEl);
+		var x = function ($) {
+			return $.element;
+		}(xEl);
+		var line4 = _Utils_Tuple2(
+			_Utils_Tuple2(x.x + x.width, x.y),
+			_Utils_Tuple2(y.x + y.width, y.y));
+		var line3 = _Utils_Tuple2(
+			_Utils_Tuple2(x.x + x.width, x.y + x.height),
+			_Utils_Tuple2(y.x + y.width, y.y + y.height));
+		var line2 = _Utils_Tuple2(
+			_Utils_Tuple2(x.x, x.y),
+			_Utils_Tuple2(y.x, y.y));
+		var line1 = _Utils_Tuple2(
+			_Utils_Tuple2(x.x, x.y + x.height),
+			_Utils_Tuple2(y.x, y.y + y.height));
+		return A2(
+			elm$core$List$map,
+			author$project$Main$generateLineFromPoints,
+			_List_fromArray(
+				[line1, line2, line3, line4]));
 	});
 var rtfeldman$elm_css$Css$Internal$property = F2(
 	function (key, value) {

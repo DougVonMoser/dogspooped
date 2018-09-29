@@ -493,16 +493,12 @@ view model =
 
 
 findTanDegrees : Float -> Float -> Float
-findTanDegrees opp adj =
+findTanDegrees a =
     let
-        radians =
-            atan (opp / adj)
+        radiansToDegrees radians =
+            (radians * 180) / pi
     in
-        (radians * 180) / pi
-
-
-
--- (x1,y1) -> (y2,y2)-> Html.Msg
+        (/) a >> atan >> radiansToDegrees
 
 
 type alias Points =
@@ -539,73 +535,27 @@ generateLineFromPoints ( ( x1, y1 ), ( x2, y2 ) ) =
 
 
 generatePointerElement : Dom.Element -> Dom.Element -> List (Html Msg)
-generatePointerElement pointer pointed =
+generatePointerElement xEl pointedEl =
     let
+        x =
+            .element xEl
+
+        y =
+            .element pointedEl
+
         line1 =
-            let
-                x1 =
-                    pointer.element.x
-
-                x2 =
-                    pointed.element.x
-
-                y1 =
-                    pointer.element.y + pointer.element.height
-
-                y2 =
-                    pointed.element.y + pointed.element.height
-            in
-                generateLineFromPoints ( ( x1, y1 ), ( x2, y2 ) )
+            ( ( x.x, x.y + x.height ), ( y.x, y.y + y.height ) )
 
         line2 =
-            let
-                x1 =
-                    pointer.element.x
-
-                y1 =
-                    pointer.element.y
-
-                x2 =
-                    pointed.element.x
-
-                y2 =
-                    pointed.element.y
-            in
-                generateLineFromPoints ( ( x1, y1 ), ( x2, y2 ) )
+            ( ( x.x, x.y ), ( y.x, y.y ) )
 
         line3 =
-            let
-                x1 =
-                    pointer.element.x + pointer.element.width
-
-                y1 =
-                    pointer.element.y + pointer.element.height
-
-                x2 =
-                    pointed.element.x + pointed.element.width
-
-                y2 =
-                    pointed.element.y + pointed.element.height
-            in
-                generateLineFromPoints ( ( x1, y1 ), ( x2, y2 ) )
+            ( ( x.x + x.width, x.y + x.height ), ( y.x + y.width, y.y + y.height ) )
 
         line4 =
-            let
-                x1 =
-                    pointer.element.x + pointer.element.width
-
-                y1 =
-                    pointer.element.y
-
-                x2 =
-                    pointed.element.x + pointer.element.width
-
-                y2 =
-                    pointed.element.y
-            in
-                generateLineFromPoints ( ( x1, y1 ), ( x2, y2 ) )
+            ( ( x.x + x.width, x.y ), ( y.x + y.width, y.y ) )
     in
-        [ line1, line2, line3, line4 ]
+        List.map generateLineFromPoints [ line1, line2, line3, line4 ]
 
 
 largeFont =

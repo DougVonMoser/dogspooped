@@ -556,8 +556,56 @@ generatePointerElement pointer pointed =
                     pointed.element.y + pointed.element.height
             in
                 generateLineFromPoints ( ( x1, y1 ), ( x2, y2 ) )
+
+        line2 =
+            let
+                x1 =
+                    pointer.element.x
+
+                y1 =
+                    pointer.element.y
+
+                x2 =
+                    pointed.element.x
+
+                y2 =
+                    pointed.element.y
+            in
+                generateLineFromPoints ( ( x1, y1 ), ( x2, y2 ) )
+
+        line3 =
+            let
+                x1 =
+                    pointer.element.x + pointer.element.width
+
+                y1 =
+                    pointer.element.y + pointer.element.height
+
+                x2 =
+                    pointed.element.x + pointed.element.width
+
+                y2 =
+                    pointed.element.y + pointed.element.height
+            in
+                generateLineFromPoints ( ( x1, y1 ), ( x2, y2 ) )
+
+        line4 =
+            let
+                x1 =
+                    pointer.element.x + pointer.element.width
+
+                y1 =
+                    pointer.element.y
+
+                x2 =
+                    pointed.element.x + pointer.element.width
+
+                y2 =
+                    pointed.element.y
+            in
+                generateLineFromPoints ( ( x1, y1 ), ( x2, y2 ) )
     in
-        [ line1 ]
+        [ line1, line2, line3, line4 ]
 
 
 largeFont =

@@ -206,7 +206,7 @@ update msg bigmodel =
                         ( TimeZoneLoaded { model | timeAdjust = newTimeAdjust }
                         , Cmd.batch
                             [ Task.attempt (\x -> Noop) (Dom.focus "input-adjust")
-                            , Task.attempt (FoundOccurenceEl) (Dom.getElement "test")
+                            , Task.attempt (FoundOccurenceEl) (Dom.getElement (posixToString occurence.posix))
                             , Task.attempt (FoundTimeAdjustEl) (Dom.getElement "input-adjust")
                             ]
                         )
@@ -445,7 +445,7 @@ view model =
                         InProgress progressRecord ->
                             case ( progressRecord.pointer, progressRecord.pointed ) of
                                 ( GotOriginElement occurenceSourceEl, GotOriginElement targetWord ) ->
-                                    generatePointerElement occurenceSourceEl targetWord
+                                    generatePointerElements occurenceSourceEl targetWord
 
                                 ( _, _ ) ->
                                     [ text "" ]
@@ -456,26 +456,36 @@ view model =
                             text ""
 
                         InProgress progressRecord ->
-                            div
-                                [ css (inputContainerStyle ++ [ zIndex (int 1) ])
-                                ]
-                                [ div [ css [ zIndex (int 4) ] ]
-                                    [ input
-                                        [ css [ fontSize (px 80), width (px 250) ]
-                                        , Html.Styled.Attributes.value progressRecord.inputValue
-                                        , Html.Styled.Attributes.id "input-adjust"
-                                        , onInput AdjustmentEvent
-                                        ]
-                                        []
-                                    , button
-                                        [ css
-                                            [ backgroundColor (rgb 255 255 255)
-                                            ]
-                                        , onClick CloseAndUpdateTime
-                                        ]
-                                        [ text "update" ]
+                            let
+                                decodeFunc =
+                                    (Json.Decode.succeed
+                                        { message = CloseAndUpdateTime
+                                        , stopPropagation = True
+                                        , preventDefault = True
+                                        }
+                                    )
+                            in
+                                div
+                                    [ Html.Styled.Events.custom "click" decodeFunc
+                                    , css (inputContainerStyle ++ [ zIndex (int 1) ])
                                     ]
-                                ]
+                                    [ div [ css [ zIndex (int 4) ] ]
+                                        [ input
+                                            [ css [ fontSize (px 80), width (px 250) ]
+                                            , Html.Styled.Attributes.value progressRecord.inputValue
+                                            , Html.Styled.Attributes.id "input-adjust"
+                                            , onInput AdjustmentEvent
+                                            ]
+                                            []
+                                        , button
+                                            [ css
+                                                [ backgroundColor (rgb 255 255 255)
+                                                ]
+                                            , onClick CloseAndUpdateTime
+                                            ]
+                                            [ text "update" ]
+                                        ]
+                                    ]
             in
                 div [ css [ width (vw 100), height (vh 100), overflow hidden ] ]
                     (List.append
@@ -508,54 +518,52 @@ type alias Points =
 generateLineFromPoints : Points -> Html Msg
 generateLineFromPoints ( ( x1, y1 ), ( x2, y2 ) ) =
     let
-        adjacent =
-            y2 - y1
-
-        oppositte =
-            x2 - x1
+        ( adjacent, oppositte ) =
+            ( y2 - y1, x2 - x1 )
 
         hypotenuse =
             sqrt ((adjacent ^ 2) + (oppositte ^ 2))
 
         degrees =
             findTanDegrees oppositte adjacent
+
+        topAndLeftPoints =
+            if y1 < y2 then
+                [ top (px y1)
+                , left (px x1)
+                ]
+            else
+                [ top (px y2)
+                , left (px x2)
+                ]
     in
         div
             [ class "point"
             , css
-                [ borderLeft3 (px 5) dashed (rgb 11 14 17)
-                , position absolute
-                , top (px y1)
-                , left (px x1)
-                , height (px hypotenuse)
-                , transform (rotate (deg -degrees))
-                ]
+                (List.append
+                    [ borderLeft3 (px 5) dashed (rgb 11 14 17)
+                    , position absolute
+                    , height (px hypotenuse)
+                    , transform (rotate (deg -degrees))
+                    ]
+                    topAndLeftPoints
+                )
             ]
             []
 
 
-generatePointerElement : Dom.Element -> Dom.Element -> List (Html Msg)
-generatePointerElement xEl pointedEl =
+generatePointerElements : Dom.Element -> Dom.Element -> List (Html Msg)
+generatePointerElements xEl pointedEl =
     let
-        x =
-            .element xEl
-
-        y =
-            .element pointedEl
-
-        line1 =
-            ( ( x.x, x.y + x.height ), ( y.x, y.y + y.height ) )
-
-        line2 =
-            ( ( x.x, x.y ), ( y.x, y.y ) )
-
-        line3 =
-            ( ( x.x + x.width, x.y + x.height ), ( y.x + y.width, y.y + y.height ) )
-
-        line4 =
-            ( ( x.x + x.width, x.y ), ( y.x + y.width, y.y ) )
+        ( x, y ) =
+            ( .element xEl, .element pointedEl )
     in
-        List.map generateLineFromPoints [ line1, line2, line3, line4 ]
+        [ ( ( x.x, x.y + x.height ), ( y.x, y.y + y.height ) )
+        , ( ( x.x, x.y ), ( y.x, y.y ) )
+        , ( ( x.x + x.width, x.y + x.height ), ( y.x + y.width, y.y + y.height ) )
+        , ( ( x.x + x.width, x.y ), ( y.x + y.width, y.y ) )
+        ]
+            |> List.map generateLineFromPoints
 
 
 largeFont =
@@ -574,19 +582,24 @@ viewHour =
         ]
 
 
+posixToString : Posix -> String
+posixToString =
+    Time.posixToMillis >> String.fromInt
+
+
 viewTimeStamps : Time.Zone -> String -> List Occurence -> List (Html Msg)
 viewTimeStamps zone wasteAction wastes =
     let
         spanner waste stringy =
-            span [ Html.Styled.Attributes.id "test", css [ margin (px 8) ], onClick (ShowATimePicker waste) ]
+            span
+                [ Html.Styled.Attributes.id (posixToString waste.posix)
+                , css [ margin (px 8) ]
+                , onClick (ShowATimePicker waste)
+                ]
                 [ text stringy ]
 
         occurrenceToTimeStamp waste =
-            let
-                spannylol =
-                    (.posix >> (viewHour zone) >> (++) wasteAction >> (spanner waste)) waste
-            in
-                spannylol
+            (.posix >> (viewHour zone) >> (++) wasteAction >> (spanner waste)) waste
     in
         List.map occurrenceToTimeStamp wastes
 

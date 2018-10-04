@@ -5791,6 +5791,16 @@ var author$project$Main$parseInputToPosix = F2(
 			return elm$core$Maybe$Nothing;
 		}
 	});
+var elm$core$Basics$composeR = F3(
+	function (f, g, x) {
+		return g(
+			f(x));
+	});
+var elm$time$Time$posixToMillis = function (_n0) {
+	var millis = _n0.a;
+	return millis;
+};
+var author$project$Main$posixToString = A2(elm$core$Basics$composeR, elm$time$Time$posixToMillis, elm$core$String$fromInt);
 var elm$browser$Browser$External = function (a) {
 	return {$: 'External', a: a};
 };
@@ -10001,7 +10011,8 @@ var author$project$Main$update = F2(
 									A2(
 									elm$core$Task$attempt,
 									author$project$Main$FoundOccurenceEl,
-									elm$browser$Browser$Dom$getElement('test')),
+									elm$browser$Browser$Dom$getElement(
+										author$project$Main$posixToString(occurence.posix))),
 									A2(
 									elm$core$Task$attempt,
 									author$project$Main$FoundTimeAdjustEl,
@@ -10236,10 +10247,6 @@ var elm$time$Time$flooredDiv = F2(
 	function (numerator, denominator) {
 		return elm$core$Basics$floor(numerator / denominator);
 	});
-var elm$time$Time$posixToMillis = function (_n0) {
-	var millis = _n0.a;
-	return millis;
-};
 var elm$time$Time$toAdjustedMinutesHelp = F3(
 	function (defaultOffset, posixMinutes, eras) {
 		toAdjustedMinutesHelp:
@@ -10893,11 +10900,6 @@ var author$project$Main$viewHour = ryannhg$date_format$DateFormat$format(
 			ryannhg$date_format$DateFormat$amPmLowercase,
 			ryannhg$date_format$DateFormat$text(' ')
 		]));
-var elm$core$Basics$composeR = F3(
-	function (f, g, x) {
-		return g(
-			f(x));
-	});
 var rtfeldman$elm_css$Css$margin = rtfeldman$elm_css$Css$prop1('margin');
 var rtfeldman$elm_css$VirtualDom$Styled$Node = F3(
 	function (a, b, c) {
@@ -12560,7 +12562,8 @@ var author$project$Main$viewTimeStamps = F3(
 					rtfeldman$elm_css$Html$Styled$span,
 					_List_fromArray(
 						[
-							rtfeldman$elm_css$Html$Styled$Attributes$id('test'),
+							rtfeldman$elm_css$Html$Styled$Attributes$id(
+							author$project$Main$posixToString(waste.posix)),
 							rtfeldman$elm_css$Html$Styled$Attributes$css(
 							_List_fromArray(
 								[
@@ -12576,7 +12579,7 @@ var author$project$Main$viewTimeStamps = F3(
 						]));
 			});
 		var occurrenceToTimeStamp = function (waste) {
-			var spannylol = A2(
+			return A2(
 				elm$core$Basics$composeR,
 				function ($) {
 					return $.posix;
@@ -12588,7 +12591,6 @@ var author$project$Main$viewTimeStamps = F3(
 						elm$core$Basics$composeR,
 						elm$core$Basics$append(wasteAction),
 						spanner(waste))))(waste);
-			return spannylol;
 		};
 		return A2(elm$core$List$map, occurrenceToTimeStamp, wastes);
 	});
@@ -12800,8 +12802,22 @@ var author$project$Main$generateLineFromPoints = function (_n0) {
 	var _n2 = _n0.b;
 	var x2 = _n2.a;
 	var y2 = _n2.b;
-	var oppositte = x2 - x1;
-	var adjacent = y2 - y1;
+	var topAndLeftPoints = (_Utils_cmp(y1, y2) < 0) ? _List_fromArray(
+		[
+			rtfeldman$elm_css$Css$top(
+			rtfeldman$elm_css$Css$px(y1)),
+			rtfeldman$elm_css$Css$left(
+			rtfeldman$elm_css$Css$px(x1))
+		]) : _List_fromArray(
+		[
+			rtfeldman$elm_css$Css$top(
+			rtfeldman$elm_css$Css$px(y2)),
+			rtfeldman$elm_css$Css$left(
+			rtfeldman$elm_css$Css$px(x2))
+		]);
+	var _n3 = _Utils_Tuple2(y2 - y1, x2 - x1);
+	var adjacent = _n3.a;
+	var oppositte = _n3.b;
 	var degrees = A2(author$project$Main$findTanDegrees, oppositte, adjacent);
 	var hypotenuse = elm$core$Basics$sqrt(
 		A2(elm$core$Basics$pow, adjacent, 2) + A2(elm$core$Basics$pow, oppositte, 2));
@@ -12811,52 +12827,55 @@ var author$project$Main$generateLineFromPoints = function (_n0) {
 			[
 				rtfeldman$elm_css$Html$Styled$Attributes$class('point'),
 				rtfeldman$elm_css$Html$Styled$Attributes$css(
-				_List_fromArray(
-					[
-						A3(
-						rtfeldman$elm_css$Css$borderLeft3,
-						rtfeldman$elm_css$Css$px(5),
-						rtfeldman$elm_css$Css$dashed,
-						A3(rtfeldman$elm_css$Css$rgb, 11, 14, 17)),
-						rtfeldman$elm_css$Css$position(rtfeldman$elm_css$Css$absolute),
-						rtfeldman$elm_css$Css$top(
-						rtfeldman$elm_css$Css$px(y1)),
-						rtfeldman$elm_css$Css$left(
-						rtfeldman$elm_css$Css$px(x1)),
-						rtfeldman$elm_css$Css$height(
-						rtfeldman$elm_css$Css$px(hypotenuse)),
-						rtfeldman$elm_css$Css$transform(
-						rtfeldman$elm_css$Css$rotate(
-							rtfeldman$elm_css$Css$deg(-degrees)))
-					]))
+				A2(
+					elm$core$List$append,
+					_List_fromArray(
+						[
+							A3(
+							rtfeldman$elm_css$Css$borderLeft3,
+							rtfeldman$elm_css$Css$px(5),
+							rtfeldman$elm_css$Css$dashed,
+							A3(rtfeldman$elm_css$Css$rgb, 11, 14, 17)),
+							rtfeldman$elm_css$Css$position(rtfeldman$elm_css$Css$absolute),
+							rtfeldman$elm_css$Css$height(
+							rtfeldman$elm_css$Css$px(hypotenuse)),
+							rtfeldman$elm_css$Css$transform(
+							rtfeldman$elm_css$Css$rotate(
+								rtfeldman$elm_css$Css$deg(-degrees)))
+						]),
+					topAndLeftPoints))
 			]),
 		_List_Nil);
 };
-var author$project$Main$generatePointerElement = F2(
+var author$project$Main$generatePointerElements = F2(
 	function (xEl, pointedEl) {
-		var y = function ($) {
-			return $.element;
-		}(pointedEl);
-		var x = function ($) {
-			return $.element;
-		}(xEl);
-		var line4 = _Utils_Tuple2(
-			_Utils_Tuple2(x.x + x.width, x.y),
-			_Utils_Tuple2(y.x + y.width, y.y));
-		var line3 = _Utils_Tuple2(
-			_Utils_Tuple2(x.x + x.width, x.y + x.height),
-			_Utils_Tuple2(y.x + y.width, y.y + y.height));
-		var line2 = _Utils_Tuple2(
-			_Utils_Tuple2(x.x, x.y),
-			_Utils_Tuple2(y.x, y.y));
-		var line1 = _Utils_Tuple2(
-			_Utils_Tuple2(x.x, x.y + x.height),
-			_Utils_Tuple2(y.x, y.y + y.height));
+		var _n0 = _Utils_Tuple2(
+			function ($) {
+				return $.element;
+			}(xEl),
+			function ($) {
+				return $.element;
+			}(pointedEl));
+		var x = _n0.a;
+		var y = _n0.b;
 		return A2(
 			elm$core$List$map,
 			author$project$Main$generateLineFromPoints,
 			_List_fromArray(
-				[line1, line2, line3, line4]));
+				[
+					_Utils_Tuple2(
+					_Utils_Tuple2(x.x, x.y + x.height),
+					_Utils_Tuple2(y.x, y.y + y.height)),
+					_Utils_Tuple2(
+					_Utils_Tuple2(x.x, x.y),
+					_Utils_Tuple2(y.x, y.y)),
+					_Utils_Tuple2(
+					_Utils_Tuple2(x.x + x.width, x.y + x.height),
+					_Utils_Tuple2(y.x + y.width, y.y + y.height)),
+					_Utils_Tuple2(
+					_Utils_Tuple2(x.x + x.width, x.y),
+					_Utils_Tuple2(y.x + y.width, y.y))
+				]));
 	});
 var rtfeldman$elm_css$Css$Internal$property = F2(
 	function (key, value) {
@@ -13044,6 +13063,16 @@ var rtfeldman$elm_css$Css$vw = A2(rtfeldman$elm_css$Css$Internal$lengthConverter
 var rtfeldman$elm_css$Css$zIndex = rtfeldman$elm_css$Css$prop1('z-index');
 var rtfeldman$elm_css$Html$Styled$input = rtfeldman$elm_css$Html$Styled$node('input');
 var rtfeldman$elm_css$Html$Styled$Attributes$value = rtfeldman$elm_css$Html$Styled$Attributes$stringProperty('value');
+var elm$virtual_dom$VirtualDom$Custom = function (a) {
+	return {$: 'Custom', a: a};
+};
+var rtfeldman$elm_css$Html$Styled$Events$custom = F2(
+	function (event, decoder) {
+		return A2(
+			rtfeldman$elm_css$VirtualDom$Styled$on,
+			event,
+			elm$virtual_dom$VirtualDom$Custom(decoder));
+	});
 var rtfeldman$elm_css$Html$Styled$Events$alwaysStop = function (x) {
 	return _Utils_Tuple2(x, true);
 };
@@ -13086,10 +13115,13 @@ var author$project$Main$view = function (model) {
 				return rtfeldman$elm_css$Html$Styled$text('');
 			} else {
 				var progressRecord = _n3.a;
+				var decodeFunc = elm$json$Json$Decode$succeed(
+					{message: author$project$Main$CloseAndUpdateTime, preventDefault: true, stopPropagation: true});
 				return A2(
 					rtfeldman$elm_css$Html$Styled$div,
 					_List_fromArray(
 						[
+							A2(rtfeldman$elm_css$Html$Styled$Events$custom, 'click', decodeFunc),
 							rtfeldman$elm_css$Html$Styled$Attributes$css(
 							_Utils_ap(
 								author$project$Main$inputContainerStyle,
@@ -13164,7 +13196,7 @@ var author$project$Main$view = function (model) {
 				if ((_n2.a.$ === 'GotOriginElement') && (_n2.b.$ === 'GotOriginElement')) {
 					var occurenceSourceEl = _n2.a.a;
 					var targetWord = _n2.b.a;
-					return A2(author$project$Main$generatePointerElement, occurenceSourceEl, targetWord);
+					return A2(author$project$Main$generatePointerElements, occurenceSourceEl, targetWord);
 				} else {
 					return _List_fromArray(
 						[

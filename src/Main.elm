@@ -7,7 +7,7 @@ import Css exposing (..)
 import Html
 import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (css, href, src, class, autofocus)
-import Html.Styled.Events exposing (onClick, onInput)
+import Html.Styled.Events exposing (onClick, onInput, on)
 import Json.Decode
 import Task
 import DateFormat
@@ -91,7 +91,7 @@ type Msg
     | JustBreakfasted
     | JustDinnered
     | ShowATimePicker Occurence
-    | AdjustmentEvent String
+    | AdjustmentEvent Int
     | CloseAndUpdateTime
     | FoundOccurenceEl (Result Dom.Error Dom.Element)
     | FoundTimeAdjustEl (Result Dom.Error Dom.Element)
@@ -198,7 +198,7 @@ update msg bigmodel =
                         newTimeAdjust =
                             InProgress
                                 { occurence = occurence
-                                , inputValue = ""
+                                , inputValue = ":  "
                                 , pointer = FindingPositionThingies
                                 , pointed = FindingPositionThingies
                                 }
@@ -211,23 +211,38 @@ update msg bigmodel =
                             ]
                         )
 
-                AdjustmentEvent rawUserTotalInput ->
+                AdjustmentEvent key ->
                     case model.timeAdjust of
                         InProgress progressRecord ->
-                            case groomInput progressRecord.inputValue rawUserTotalInput of
-                                KeepEditing groomedInput ->
-                                    ( TimeZoneLoaded
-                                        { model
-                                            | timeAdjust =
-                                                InProgress
-                                                    { progressRecord | inputValue = groomedInput }
-                                        }
-                                    , Cmd.none
-                                    )
+                            let
+                                wasEnter =
+                                    key == 13
 
-                                -- implement escape, goodAndDoneAdjustment
-                                _ ->
-                                    ( bigmodel, Cmd.none )
+                                something =
+                                    Debug.log "hi" key
+
+                                placeholder =
+                                    Char.fromCode key
+                                        |> String.fromChar
+                                        |> (++) progressRecord.inputValue
+                            in
+                                if wasEnter then
+                                    closeAndUpdateFunc bigmodel model
+                                else
+                                    case groomInput progressRecord.inputValue placeholder of
+                                        KeepEditing groomedInput ->
+                                            ( TimeZoneLoaded
+                                                { model
+                                                    | timeAdjust =
+                                                        InProgress
+                                                            { progressRecord | inputValue = groomedInput }
+                                                }
+                                            , Cmd.none
+                                            )
+
+                                        -- implement escape, goodAndDoneAdjustment
+                                        _ ->
+                                            ( bigmodel, Cmd.none )
 
                         _ ->
                             ( bigmodel, Cmd.none )
@@ -273,24 +288,28 @@ update msg bigmodel =
                             ( bigmodel, Cmd.none )
 
                 CloseAndUpdateTime ->
-                    case model.timeAdjust of
-                        InProgress progressRecord ->
-                            case parseInputToPosix progressRecord.inputValue model.zone of
-                                Just updatedPosix ->
-                                    let
-                                        newDogs =
-                                            adjustDogOccurence progressRecord.occurence model.dogs updatedPosix
-                                    in
-                                        ( TimeZoneLoaded { model | timeAdjust = NotInProgress, dogs = newDogs }, Cmd.none )
-
-                                Nothing ->
-                                    ( TimeZoneLoaded { model | timeAdjust = NotInProgress }, Cmd.none )
-
-                        NotInProgress ->
-                            ( TimeZoneLoaded { model | timeAdjust = NotInProgress }, Cmd.none )
+                    closeAndUpdateFunc bigmodel model
 
                 _ ->
                     ( bigmodel, Cmd.none )
+
+
+closeAndUpdateFunc bigmodel model =
+    case model.timeAdjust of
+        InProgress progressRecord ->
+            case parseInputToPosix progressRecord.inputValue model.zone of
+                Just updatedPosix ->
+                    let
+                        newDogs =
+                            adjustDogOccurence progressRecord.occurence model.dogs updatedPosix
+                    in
+                        ( TimeZoneLoaded { model | timeAdjust = NotInProgress, dogs = newDogs }, Cmd.none )
+
+                Nothing ->
+                    ( TimeZoneLoaded { model | timeAdjust = NotInProgress }, Cmd.none )
+
+        NotInProgress ->
+            ( TimeZoneLoaded { model | timeAdjust = NotInProgress }, Cmd.none )
 
 
 type ActionAfterInput
@@ -311,17 +330,41 @@ type MagicToDoOnString
 groomInput : String -> String -> ActionAfterInput
 groomInput existingInput userAddedInput =
     let
-        pipeline userAdded =
-            ignoreNonDigits userAdded
-                |> Maybe.map addAColonMaybe
+        deletemeyay =
+            Debug.log "event?" userAddedInput
+
+        pipeline =
+            String.replace ":" "" userAddedInput
+                |> String.replace " " ""
+                |> ignoreNonDigits
                 |> Maybe.andThen restrictFiveDigits
+                |> Maybe.map replaceColon
     in
-        case pipeline userAddedInput of
+        case pipeline of
             Just updatedInput ->
                 KeepEditing updatedInput
 
             Nothing ->
                 KeepEditing existingInput
+
+
+replaceColon : String -> String
+replaceColon existing =
+    case String.length existing of
+        1 ->
+            ": " ++ existing
+
+        2 ->
+            ":" ++ existing
+
+        3 ->
+            (String.left 1 existing) ++ ":" ++ (String.right 2 existing)
+
+        4 ->
+            (String.left 2 existing) ++ ":" ++ (String.right 2 existing)
+
+        _ ->
+            ":  "
 
 
 restrictFiveDigits : String -> Maybe String
@@ -332,28 +375,23 @@ restrictFiveDigits stringy =
         Nothing
 
 
-addAColonMaybe : String -> String
-addAColonMaybe stringy =
-    if String.length stringy == 2 then
-        stringy ++ ":"
-    else
-        stringy
-
-
 ignoreNonDigits : String -> Maybe String
 ignoreNonDigits raw =
-    String.toList raw
-        |> List.reverse
-        |> Debug.log "omg!"
-        |> List.head
-        |> Maybe.map Char.isDigit
-        |> Maybe.andThen
-            (\x ->
-                if x == True then
+    let
+        maybeChar =
+            String.toList raw
+                |> List.reverse
+                |> List.head
+    in
+        case maybeChar of
+            Just charry ->
+                if Char.isDigit charry then
                     Just raw
                 else
                     Nothing
-            )
+
+            Nothing ->
+                Just raw
 
 
 adjustDogOccurence : Occurence -> List Dog -> Posix -> List Dog
@@ -466,15 +504,21 @@ view model =
                                     )
                             in
                                 div
-                                    [ Html.Styled.Events.custom "click" decodeFunc
-                                    , css (inputContainerStyle ++ [ zIndex (int 1) ])
+                                    [ css (inputContainerStyle ++ [ zIndex (int 1) ])
                                     ]
                                     [ div [ css [ zIndex (int 4) ] ]
                                         [ input
-                                            [ css [ fontSize (px 80), width (px 250) ]
+                                            [ css
+                                                [ fontSize (px 80)
+                                                , width (px 250)
+                                                , property "direction" "ltr"
+                                                , property "text-align" "right"
+                                                , fontFamily monospace
+                                                ]
                                             , Html.Styled.Attributes.value progressRecord.inputValue
                                             , Html.Styled.Attributes.id "input-adjust"
-                                            , onInput AdjustmentEvent
+                                            , on "keypress"
+                                                (Json.Decode.map AdjustmentEvent Html.Styled.Events.keyCode)
                                             ]
                                             []
                                         , button
